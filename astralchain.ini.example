@@ -156,9 +156,15 @@
 # window_size = 1920x1080
 # fullscreen = 1
 # 1, the default: the game keeps running while you are in another window; the keyboard stays quiet until the window is
-# in front again. 0: it pauses when its window loses focus, as it does on the Switch when Home is pressed; a load
-# interrupted that way can stop for good. Read at each focus change.
+# in front again. 0: it pauses while its window is out of focus, as it does on the Switch when Home is pressed:
+# picture, sound, vibration and game time stand still and go on when the window is back. The pause waits for a save
+# being written.
+# Takes effect at once.
 # assume_focus = 1
+# Written by the game, not a setting: up to 1.21.0 assume_focus = 0 paused nothing, and the first start of a later
+# version removes such a line here once, so the default, 1, applies. assume_focus_migrated = 1 records that this ran,
+# so a 0 picked afterwards (here or in the menu) is kept.
+# assume_focus_migrated = 1
 # 1, the default: the game pauses while its settings menu (F1, or Minus + Plus) is open: picture, sound and game time
 # stand still and go on when it closes. The pause waits for a save being written. A setting whose effect the game
 # draws (upscaling, ambient occlusion, the HUD) then shows when the menu closes. 0: the game keeps running behind the

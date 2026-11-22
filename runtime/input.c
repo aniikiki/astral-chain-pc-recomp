@@ -763,9 +763,16 @@ void input_poll_ui(uint64_t *buttons, int32_t *lx, int32_t *ly, int32_t *rx, int
     poll_merged(-1, buttons, lx, ly, rx, ry);
 }
 
-void input_poll_paused(void) {
+void input_poll_paused(int away) {
     uint64_t b;
     int32_t lx, ly, rx, ry;
+    if (away) {
+        // SDL sends what a pad's driver put off (a rumble stop included) and renews or expires a rumble only in here
+        plat_mutex_lock(&lock);
+        if (state == 1) SDL_UpdateGamepads();
+        plat_mutex_unlock(&lock);
+        return;
+    }
     // each source keeps its own memory of the chords (poll_merged), so poll the ones the game polls: another would see
     // a chord still held from opening the menu as a new press and close it
     if (players > 1) {
@@ -959,6 +966,21 @@ int input_rumble_player(int player, uint16_t low, uint16_t high, uint32_t ms) {
     }
     plat_mutex_unlock(&lock);
     return ok;
+}
+
+// Not left to the 250 ms a send lasts (ov_input.c rumble_update): that is a quarter second of vibration on a still
+// picture. The triggers too, whatever rumble_triggers says now: it may have been switched off since the last send.
+void input_rumble_stop(void) {
+    plat_mutex_lock(&lock);
+    if (state == 1) {
+        SDL_Gamepad *const g[2] = {pad, pad2};
+        for (int i = 0; i < 2; i++)
+            if (g[i]) {
+                SDL_RumbleGamepad(g[i], 0, 0, 0);
+                SDL_RumbleGamepadTriggers(g[i], 0, 0, 0);
+            }
+    }
+    plat_mutex_unlock(&lock);
 }
 
 // SDL gamepad sensor axes (SDL_sensor.h, a gamepad held in front of you): x to the right, y up out of the face (lying

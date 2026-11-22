@@ -166,15 +166,23 @@ Every guest thread is a host thread. Astral Chain assumes Horizon's scheduler: t
   (`AC_SPIN_SLEEP_US`, 0 to keep polling).
 - `free_cores = 1` (`AC_FREE_CORES=1`) turns the gate off, for experiments only: the game crashes or hangs, usually
   at start, because its job workers all report core 0 and share per-core memory (#212).
-- Pause (`runtime/pause.c`; `menu_pause = 1`, the default: while the menu is open). At a present the presenting thread
+- Pause (`runtime/pause.c`; `menu_pause = 1`, the default: while the menu is open; `assume_focus = 0`: while the
+  window is out of focus). The game sets `FocusHandlingMode` 3, AlwaysSuspend, so a Switch suspends it out of focus
+  and `GetCurrentFocusState` always answers in focus here. At a present the presenting thread
   calls `kern_pause`: every holder is asked for its core as a better waiter would ask, none is granted again, and once
   the three are back the guest's clock stops (`rt_ticks`, the kernel's timeouts and sleeps, the GPU timestamps), so
   guest code never runs on a clock that stands still. The audio output keeps what is queued and plays silence, with
-  5 ms ramps that consume nothing. The presenting thread then shows the last picture again for the menu
+  5 ms ramps that consume nothing, and the pads' motors, triggers included, are stopped at once
+  (`input_rumble_stop`). The presenting thread then shows the last picture again for the menu
   (`GfxBackend.repeat`, through the replay queue so that timeline values keep their order) and polls the pad's chords.
+  Out of focus it repeats four times a second and only updates the pads, without reading their buttons. A stored
+  `assume_focus = 0`, which paused nothing up to 1.21.0, is removed once (`cfg_migrate_focus`, marker
+  `assume_focus_migrated = 1`); a 0 picked afterwards stays.
   The pause waits for a save being written (`fs_save_busy`), and a holder that keeps its core for 500 ms cancels it
   for 2 s. Host threads go on, so no host lock they need may be held across `kern_core_back` or a call into guest
-  code. Another reason to pause goes into `pause_wanted`. The `free_cores` mode does not pause.
+  code. Another reason to pause goes into `pause_reasons`. The `free_cores` mode does not pause. The log has a line
+  for each pause's start (reason, number, local time), change of reason and end (its length and the total), for each
+  cause that holds one back, and says when the window closed during one.
   Measured on 2026-11-22 on a Core Ultra 9 285H with an Arc 140T, docked at 1600x900 and 60 fps, on the motorway:
   - 108 pauses in a run stopped the threads in 1 ms at most (0.7 ms at the 99th percentile). Over 8 s paused none of
     the game's 18 threads took a cycle, no SVC or NVN call ran, the sound queue and both clocks stood still and the
@@ -186,6 +194,15 @@ Every guest thread is a host thread. Astral Chain assumes Horizon's scheduler: t
     paused, and the present thread stayed there in play afterwards (3450 Mcycles a second against 205). Immediate
     did not spin.
   - `rt_ticks` went from 13.75 to 13.87 ns a call (best of 9 alternated runs of its body).
+  - Out of focus (focus messages posted to the window, same machine): paused 16 ms after the message and running
+    12 ms after the one back, with world, frames, sound, clock, SVCs and NVN calls at a stop and 0.016 of a core
+    (0.023 minimised). 65 pauses through the new game's loads, opening movie and cutscene and 100 fast focus changes
+    ended at 60.0 fps with the sound at 1.000. 38 pauses of 0.04 to 1 s in the opening movie moved picture against
+    sound by at most 2 ms a pause on average. One run of the skipped opening, with pauses, closed its movie 213 ms
+    behind its sound; five more with pauses in those seconds ended at 3 to 83 ms, and the cause of that one was not
+    found.
+  - Vibration (an SDL virtual pad): motors and triggers went to 0 within 0.1 ms of a pause, against 250 ms when left
+    to the send's own duration.
   - Not measured: NVIDIA and AMD drivers (Reflex's frame IDs across a pause included), displays over 60 Hz, HDR,
     co-op, the Steam Deck, Linux (the changed sources were only compiled for it) and `tools/av_sync_test.py`'s matrix.
 

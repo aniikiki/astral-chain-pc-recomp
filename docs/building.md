@@ -143,7 +143,8 @@ From the repository root, in PowerShell. Every step that depends on the game ver
    file.
 
 7. Run. The game keeps running when its window loses the focus (`assume_focus = 1` in `astralchain.ini`, the default; the
-   Game tab switches it). With 0 it pauses, as it does on the Switch when Home is pressed.
+   Game tab switches it). With 0 it pauses, as it does on the Switch when Home is pressed (`runtime/pause.c`). A 0
+   stored before that worked is removed once (`assume_focus_migrated = 1`).
 
    ```powershell
    build\<ver>\astralchain.exe

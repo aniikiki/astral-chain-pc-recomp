@@ -48,13 +48,12 @@ static int g_started;
 
 void gfx_window_mark_dirty(void) { plat_xchg32(&g_dirty, 1); }
 
-// The window gained or lost the focus: the game hears it as nn::oe's focus state and a notification message. The line
-// carries the local wall time, the only one in the log: when a GPU hang takes the whole system down, the log ends
+// The window gained or lost the focus: the game gets nn::oe's notification message and pause.c reads the state. The
+// line carries the local wall time, the only one in the log: when a GPU hang takes the whole system down, the log ends
 // without an error, and this time set against the driver's entry in the Windows event log (nvlddmkm 153, Display 4101)
 // tells whether an alt-tab or an overlay came before the hang or followed it.
 void gfx_window_focus_changed(int in) {
     plat_xchg32(&g_focused, in);
-    oe_set_focus(in);                          // pinned to 1 by AC_ASSUME_FOCUS inside
     oe_push_message(OE_MSG_FOCUS_STATE_CHANGED);
     plat_inc32(&g_focus_msgs);
     struct tm t;
@@ -83,7 +82,8 @@ void gfx_window_f12(void) {
 // RomFS and the saves.
 void gfx_window_closed(void) {
     int restart = plat_cas32(&g_restart, 0, 0) != 0;
-    rt_log("gfx: window closed; %s", restart ? "restarting" : "exiting");
+    rt_log("gfx: window closed%s; %s", kern_paused() ? " while the game was paused" : "",
+           restart ? "restarting" : "exiting");
     fs_save_flush();
     vk_pipeline_save();
     prof_write();   // plat_exit runs no atexit handlers

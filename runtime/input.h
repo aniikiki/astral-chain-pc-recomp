@@ -23,8 +23,11 @@ int input_poll_player(int player, uint64_t *buttons, int32_t *lx, int32_t *ly, i
 // it closes (nothing until every button and stick direction is released). Independent of input_block.
 void input_menu(int open);
 // While the game is paused (pause.c) nothing else polls: one poll of every source the game reads, for the menu's and
-// the overlay's chords. It reports nothing.
-void input_poll_paused(void);
+// the overlay's chords. away (out of focus): the pads are only updated, their chords are not looked at. It reports
+// nothing.
+void input_poll_paused(int away);
+// The start of a pause: every motor of both players' gamepads stops now.
+void input_rumble_stop(void);
 // The gamepad alone, for the menu: Switch button bits and the left stick (up +y). 0 without a connected gamepad.
 // Minus+Plus combo and the neutral pad while the menu is open (input_map.c, window-system free): *held is the caller's memory
 // of the combo, sticks are lx, ly, rx, ry. Returns 1 in the poll where the combo goes down (toggle the menu once).

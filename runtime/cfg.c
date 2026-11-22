@@ -31,7 +31,7 @@ static int save_ok = 1;                         // the last cfg_save_to wrote (o
 // logged as unknown. A new variable goes here too, or its ini key logs a harmless "unknown key" line. FXAA stays known
 // though nothing reads it any more (it switched TotK's FXAA, which Astral Chain does not have): older files carry it.
 static const char *const known[] = {
-    "AB", "AMIIBO_DIR", "ANISO", "ANTI_ALIASING", "AO", "AO_DEBUG", "APP_POOL", "ASPECT", "ASPECT_MIGRATED", "ASPECT_PATCH", "ASSUME_FOCUS", "ASTC", "ASTC_BC", "ASTC_TIME", "ASYNC_PREEMPT", "AUDIO", "AUDIO_BASS", "AUDIO_CENTER", "AUDIO_FRONT_LEFT", "AUDIO_FRONT_RIGHT", "AUDIO_MIX_PRESET", "AUDIO_OFF", "AUDIO_OUTPUT", "AUDIO_SUBWOOFER", "AUDIO_SURROUND_LEFT", "AUDIO_SURROUND_RIGHT", "AVSYNC_PATCH", "AUDIO_PREFILL_MS",
+    "AB", "AMIIBO_DIR", "ANISO", "ANTI_ALIASING", "AO", "AO_DEBUG", "APP_POOL", "ASPECT", "ASPECT_MIGRATED", "ASPECT_PATCH", "ASSUME_FOCUS", "ASSUME_FOCUS_MIGRATED", "ASTC", "ASTC_BC", "ASTC_TIME", "ASYNC_PREEMPT", "AUDIO", "AUDIO_BASS", "AUDIO_CENTER", "AUDIO_FRONT_LEFT", "AUDIO_FRONT_RIGHT", "AUDIO_MIX_PRESET", "AUDIO_OFF", "AUDIO_OUTPUT", "AUDIO_SUBWOOFER", "AUDIO_SURROUND_LEFT", "AUDIO_SURROUND_RIGHT", "AVSYNC_PATCH", "AUDIO_PREFILL_MS",
     "BACKGROUND_WINDOW", "BIND_A", "BIND_B", "BIND_DOWN", "BIND_L", "BIND_LCLICK", "BIND_LEFT", "BIND_LSTICK_DOWN", "BIND_LSTICK_LEFT",
     "BIND_LSTICK_RIGHT", "BIND_LSTICK_UP", "BIND_MINUS",
     "BIND_PLUS", "BIND_R", "BIND_RCLICK", "BIND_RIGHT", "BIND_RSTICK_DOWN", "BIND_RSTICK_LEFT", "BIND_RSTICK_RIGHT", "BIND_RSTICK_UP",
@@ -80,6 +80,7 @@ static const struct { const char *key, *section; } sections[] = {
     {"ANTI_ALIASING", "display"}, {"UPSCALING", "display"}, {"UPSCALING_QUALITY", "display"}, {"DLAA", "display"},
     {"DLSS", "display"}, {"XESS", "display"},
     {"DEVICE_PROFILE", "display"}, {"DECK_RES_MIGRATED", "display"}, {"DECK_AA_MIGRATED", "display"}, {"ASPECT_MIGRATED", "display"}, {"ASSUME_FOCUS", "display"},
+    {"ASSUME_FOCUS_MIGRATED", "display"},
     {"MENU_PAUSE", "display"},
     {"SHADOW_SCALE", "display"}, {"SHADOW_RANGE", "display"}, {"CONTACT_SHADOWS", "display"}, {"AO", "display"},
     {"PCSS", "display"},
@@ -157,7 +158,7 @@ static const CfgMeta metas[] = {
     {"HIGHFPS_FIX", "1", "0|1", RESTART},
     {"LANG", "", "ja|en-US|fr|de|it|es|zh-CN|ko|nl|pt|ru|zh-TW|en-GB|fr-CA|es-419|zh-Hans|zh-Hant|pt-BR", RESTART},
     {"OPERATION_MODE", "docked", "docked|handheld", RESTART},
-    {"ASSUME_FOCUS", "1", "0|1", LIVE},   // read on every focus change (ov_system.c)
+    {"ASSUME_FOCUS", "1", "0|1", LIVE},   // 0: the game stands still out of focus (pause.c)
     {"MENU_PAUSE", "1", "0|1", LIVE},     // the game stands still while the menu is open (pause.c)
     {"HUD", "1", "0|1", LIVE},            // the gameplay HUD is drawn (resolution.c res_hud_tick); F12 switches it
     // Sound, Controls, Menu
@@ -898,6 +899,35 @@ int cfg_migrate_deck_res(int deck) {
     return reset ? 2 : 1;
 }
 
+// A setting's one-time move to its default: the file's line of key is removed unless it says keep, and the marker key
+// done goes into the file either way, so a value picked afterwards stays. *was: the value removed (it stays valid).
+// Returns 0 when nothing ran (already done), 1 when only the marker was set, 2 when the line was removed as well.
+static int migrate_once(const char *key, const char *done, const char *keep, const char **was) {
+    plat_mutex_lock(&set_lock);
+    CfgEntry *mark = NULL, *e = NULL;
+    for (int i = 0; i < n_entries; i++) {
+        if (!strcmp(entries[i].key, done)) mark = &entries[i];
+        if (!strcmp(entries[i].key, key)) e = &entries[i];
+    }
+    if (mark && mark->value && strcmp(mark->value, "0")) {
+        plat_mutex_unlock(&set_lock);
+        return 0;
+    }
+    int reset = e && e->value && !e->removed && strcmp(e->value, keep);
+    if (reset) {
+        *was = e->value;
+        __atomic_store_n(&e->value, NULL, __ATOMIC_RELEASE);   // the old string stays for readers
+        e->dirty = 0;
+        e->removed = 1;   // cfg_save_to deletes the line
+        __atomic_add_fetch(&version, 1, __ATOMIC_RELEASE);
+    }
+    plat_mutex_unlock(&set_lock);
+    char var[64];
+    snprintf(var, sizeof var, PREFIX "%s", done);
+    cfg_set(var, "1");
+    return reset ? 2 : 1;
+}
+
 // ---- the picture's shape: one move to wide. Up to 1.11.0 aspect was fit or stretch; wide, which fills a window wider
 // or taller than 16:9 with a view of its shape and is the same as fit in a 16:9 one, is the default since. A fit or stretch line in
 // astralchain.ini was chosen when there was no wide to choose, so it is removed once and the default applies. The
@@ -905,28 +935,27 @@ int cfg_migrate_deck_res(int deck) {
 // stays. The environment's AC_ASPECT is a choice for one launch and is not looked at. Returns 0 when nothing ran
 // (already done), 1 when only the marker was set, 2 when the aspect line was removed as well; the caller saves.
 int cfg_migrate_aspect(void) {
-    plat_mutex_lock(&set_lock);
-    CfgEntry *mark = NULL, *aspect = NULL;
-    for (int i = 0; i < n_entries; i++) {
-        if (!strcmp(entries[i].key, "ASPECT_MIGRATED")) mark = &entries[i];
-        if (!strcmp(entries[i].key, "ASPECT")) aspect = &entries[i];
-    }
-    if (mark && mark->value && strcmp(mark->value, "0")) {
-        plat_mutex_unlock(&set_lock);
-        return 0;
-    }
-    int reset = aspect && aspect->value && !aspect->removed && strcmp(aspect->value, "wide");
-    if (reset) {
+    const char *was;
+    int r = migrate_once("ASPECT", "ASPECT_MIGRATED", "wide", &was);
+    if (r == 2)
         rt_log("cfg: astralchain.ini aspect = %s dates from before the wide view; removed once so the default, wide, "
-               "applies (aspect_migrated = 1 marks it done: fit or stretch picked again stays)", aspect->value);
-        __atomic_store_n(&aspect->value, NULL, __ATOMIC_RELEASE);   // the old string stays for readers
-        aspect->dirty = 0;
-        aspect->removed = 1;   // cfg_save_to deletes the line
-        __atomic_add_fetch(&version, 1, __ATOMIC_RELEASE);
-    }
-    plat_mutex_unlock(&set_lock);
-    cfg_set(PREFIX "ASPECT_MIGRATED", "1");
-    return reset ? 2 : 1;
+               "applies (aspect_migrated = 1 marks it done: fit or stretch picked again stays)", was);
+    return r;
+}
+
+// ---- out of focus: one move to running on. Up to 1.21.0 assume_focus = 0 paused nothing; now it stops the
+// game at each Alt+Tab, which nobody who stored a 0 then has seen. So a stored value other than 1 is removed once and
+// the default, 1, applies. The marker assume_focus_migrated = 1 goes into the file whether or not a line moved, so a 0
+// picked afterwards stays. The environment's AC_ASSUME_FOCUS is a choice for one launch and is not looked at. Returns
+// as migrate_once; the caller saves.
+int cfg_migrate_focus(void) {
+    const char *was;
+    int r = migrate_once("ASSUME_FOCUS", "ASSUME_FOCUS_MIGRATED", "1", &was);
+    if (r == 2)
+        rt_log("cfg: astralchain.ini assume_focus = %s dates from before it paused the game; removed once so the "
+               "default, 1 (keep running out of focus), applies (assume_focus_migrated = 1 marks it done: 0 picked "
+               "again stays)", was);
+    return r;
 }
 
 // The environment's anti_aliasing of 1.10.1 (AC_ANTI_ALIASING=dlaa, xess or fsr3: scripts, docs/building.md's checks),
@@ -970,7 +999,8 @@ void cfg_init(void) {
                "turns it off)");
     // Saved at once, but no file is made only for the marker: without astralchain.ini it stays pending in memory and goes
     // in with the first save that makes the file (a menu change, F11), the only way a stored output_res can appear.
-    int moved = cfg_migrate_deck_res(profile_of()), shape = cfg_migrate_aspect();
+    int moved = cfg_migrate_deck_res(profile_of()), shape = cfg_migrate_aspect(), focus = cfg_migrate_focus();
     if (moved < shape) moved = shape;
+    if (moved < focus) moved = focus;
     if (moved == 2 || (moved == 1 && find_ini() && plat_file_exists(ini_path))) cfg_save();
 }

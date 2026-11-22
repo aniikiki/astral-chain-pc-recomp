@@ -175,9 +175,9 @@ static const char *const text_en[UI_TEXT_COUNT] = {
     [UI_MENU_HUD_DESC] = "Off, the game's HUD is not drawn during play; the menus stay. F12 toggles it.",
     [UI_MENU_ASSUME_FOCUS] = "Keep running out of focus",
     [UI_MENU_ASSUME_FOCUS_DESC] = "On (the default), the game keeps running while you are in another window, and the "
-                                  "keyboard stays quiet until the window is in front again. Off, it pauses when its "
-                                  "window loses focus, as on the Switch when Home is pressed; a load interrupted that "
-                                  "way can stop for good.",
+                                  "keyboard stays quiet until the window is in front again. Off, the whole game, "
+                                  "sound included, pauses while its window is out of focus, as on the Switch when Home "
+                                  "is pressed.",
 
     [UI_MENU_MODS_INSTALLED] = "Installed mods",
     [UI_MENU_MODS_NONE] = "No mods yet. Unpack a mod into the mods folder, one folder per mod with its romfs folder "
@@ -631,9 +631,8 @@ static const char *const text_ru[UI_TEXT_COUNT] = {
     [UI_MENU_HUD_DESC] = "Выключено: интерфейс игры во время игры не рисуется; меню остаются. F12 переключает.",
     [UI_MENU_ASSUME_FOCUS] = "Работать без фокуса",
     [UI_MENU_ASSUME_FOCUS_DESC] = "Включено (по умолчанию): игра идёт, пока вы в другом окне, а клавиатура не "
-                                  "действует, пока окно не вернётся на передний план. Выключено: игра встаёт на паузу, "
-                                  "когда окно теряет фокус, как на Switch при нажатии Home; прерванная так загрузка "
-                                  "может остановиться насовсем.",
+                                  "действует, пока окно не вернётся на передний план. Выключено: вся игра, вместе со "
+                                  "звуком, стоит на паузе, пока окно не в фокусе, как на Switch при нажатии Home.",
 
     [UI_MENU_MODS_INSTALLED] = "Установленные моды",
     [UI_MENU_MODS_NONE] = "Модов пока нет. Распакуйте мод в папку mods, каждый мод в свою папку с папкой romfs внутри, и "
@@ -1019,9 +1018,9 @@ static const char *const text_pt_br[UI_TEXT_COUNT] = {
                          "alterna.",
     [UI_MENU_ASSUME_FOCUS] = "Continuar rodando fora de foco",
     [UI_MENU_ASSUME_FOCUS_DESC] = "Ligado (o padrão), o jogo continua rodando enquanto você está em outra janela, e o "
-                                  "teclado fica sem efeito até a janela voltar para a frente. Desligado, ele pausa quando "
-                                  "a janela perde o foco, como no Switch ao apertar Home; um carregamento interrompido "
-                                  "assim pode parar de vez.",
+                                  "teclado fica sem efeito até a janela voltar para a frente. Desligado, o jogo inteiro, "
+                                  "inclusive o som, fica pausado enquanto a janela está sem foco, como no Switch ao "
+                                  "apertar Home.",
     [UI_MENU_REALTIME] = "Velocidade do jogo pelo relógio",
     [UI_MENU_REALTIME_DESC] = "Avança o jogo pelo tempo real, para que um quadro lento não deixe o jogo mais lento.",
     [UI_MENU_CLOTH_REALTIME] = "Tecidos pelo relógio",
@@ -1552,8 +1551,7 @@ static const char *const text_zh_hans[UI_TEXT_COUNT] = {
     [UI_MENU_ASSUME_FOCUS] = "后台保持运行",
     [UI_MENU_ASSUME_FOCUS_DESC] = "开启（默认）时，切到其他窗口游戏仍会继续运行，"
                                   "但键盘要等窗口回到前台才会响应。关闭时，"
-                                  "窗口失去焦点即暂停，如同在 Switch 上按 Home 键；"
-                                  "这样被打断的读取可能会永久卡住。",
+                                  "窗口失去焦点期间整个游戏（包括声音）都会暂停，如同在 Switch 上按 Home 键。",
     [UI_MENU_VOLUME] = "音量",
     [UI_MENU_VOLUME_DESC] = "游戏的主音量。",
     [UI_MENU_AUDIO_OUTPUT] = "音频输出",

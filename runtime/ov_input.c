@@ -494,8 +494,9 @@ static float light_share(float f) { return f > 160 ? (f < 320 ? log2f(f / 160) :
 // Switch HD rumble -> SDL_RumbleGamepad. Each side's two bands split by frequency between the heavy (low) and the light
 // (high) motor (light_share) and add up as energy per motor (root of the summed squares); the stronger side drives each
 // motor. A side the game has not updated for 250 ms is silent. Each send lasts 250 ms and is renewed every 50 ms while
-// the game streams, so the pad stops by itself when the game stops sending (pause, freeze). Under vib_lock. p: 0 the
-// solo controller or co-op player 1, 1 player 2 (whose gamepad input.c picks, input_rumble_player).
+// the game streams, so the pad stops by itself when the game stops sending (a freeze; a pause stops it at once,
+// input_rumble_stop), as long as SDL_UpdateGamepads goes on being called: only that expires a send. Under vib_lock.
+// p: 0 the solo controller or co-op player 1, 1 player 2 (whose gamepad input.c picks, input_rumble_player).
 static void rumble_update(uint64_t now, int p) {
     float heavy = 0, light = 0;
     rumble_cfg();

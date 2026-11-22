@@ -586,6 +586,49 @@ int probe_cfg(void) {
     CHECK(plat_file_write(path, shape_wide, sizeof shape_wide - 1) && cfg_load(path) == 1 && cfg_migrate_aspect() == 1 &&
               EQ(cfg_get("AC_ASPECT"), "wide"),
           "aspect migration: a wide line stays, the marker only");
+    // The one-time move of a stored assume_focus = 0 to the default, 1 (cfg.c cfg_migrate_focus). The test scripts set
+    // AC_ASSUME_FOCUS=1, which would hide the file's value: the checks run without it.
+    char *focus_env = getenv("AC_ASSUME_FOCUS") ? strdup(getenv("AC_ASSUME_FOCUS")) : NULL;
+    plat_setenv("AC_ASSUME_FOCUS", NULL);
+    static const char focus_old[] = "[display]\r\nassume_focus = 0\r\n";
+    static const char focus_done[] = "[display]\r\nassume_focus_migrated = 1\r\n";
+    CHECK(plat_file_write(path, focus_old, sizeof focus_old - 1) && cfg_load(path) == 1 && cfg_migrate_focus() == 2 &&
+              !cfg_is_set("AC_ASSUME_FOCUS") && cfg_bool("AC_ASSUME_FOCUS") && cfg_save_to(path) == 1,
+          "focus migration: a stored 0 is removed and the default, 1, applies");
+    got = plat_file_read(path, &got_n);
+    CHECK(got && got_n == sizeof focus_done - 1 && !memcmp(got, focus_done, got_n),
+          "focus migration: the assume_focus line leaves the file, the marker comes in");
+    if (got && (got_n != sizeof focus_done - 1 || memcmp(got, focus_done, got_n)))
+        fprintf(stderr, "---- saved:\n%s\n----\n", got);
+    free(got);
+    CHECK(cfg_load(path) == 1 && cfg_migrate_focus() == 0, "focus migration: runs once");
+    cfg_set("AC_ASSUME_FOCUS", "0");   // the pause picked in the menu
+    CHECK(cfg_save_to(path) == 1 && cfg_load(path) == 1 && cfg_migrate_focus() == 0 && !cfg_bool("AC_ASSUME_FOCUS"),
+          "focus migration: 0 picked after the move stays");
+    CHECK(plat_file_write(path, focus_old, sizeof focus_old - 1) && cfg_load(path) == 1 && cfg_migrate_focus() == 2,
+          "focus migration: a stored 0 again");
+    cfg_set("AC_ASSUME_FOCUS", "0");   // picked before the move was saved
+    CHECK(cfg_save_to(path) == 1 && cfg_load(path) == 1 && cfg_migrate_focus() == 0 && !cfg_bool("AC_ASSUME_FOCUS"),
+          "focus migration: 0 picked in the same session stays");
+    static const char focus_twice[] = "[display]\nassume_focus = 1\nAC_Assume_Focus = 0\n";
+    CHECK(plat_file_write(path, focus_twice, sizeof focus_twice - 1) && cfg_load(path) == 1 && cfg_migrate_focus() == 2 &&
+              cfg_save_to(path) == 1 && cfg_load(path) == 1 && cfg_migrate_focus() == 0 && cfg_bool("AC_ASSUME_FOCUS"),
+          "focus migration: every spelling and copy of the line goes");
+    static const char focus_one[] = "[display]\nassume_focus = 1\n";
+    CHECK(plat_file_write(path, focus_one, sizeof focus_one - 1) && cfg_load(path) == 1 && cfg_migrate_focus() == 1 &&
+              EQ(cfg_get("AC_ASSUME_FOCUS"), "1"),
+          "focus migration: a 1 line stays, the marker only");
+    static const char both_old[] = "[display]\naspect = fit\nassume_focus = 0\n";
+    CHECK(plat_file_write(path, both_old, sizeof both_old - 1) && cfg_load(path) == 1 && cfg_migrate_aspect() == 2 &&
+              cfg_migrate_focus() == 2 && cfg_save_to(path) == 1 && cfg_load(path) == 1 && cfg_migrate_aspect() == 0 &&
+              cfg_migrate_focus() == 0 && !cfg_is_set("AC_ASPECT") && !cfg_is_set("AC_ASSUME_FOCUS"),
+          "focus migration: saved together with the aspect's");
+    plat_setenv("AC_ASSUME_FOCUS", "0");   // one launch's choice
+    CHECK(plat_file_write(path, focus_one, sizeof focus_one - 1) && cfg_load(path) == 1 && cfg_migrate_focus() == 1 &&
+              !cfg_bool("AC_ASSUME_FOCUS"),
+          "focus migration: the environment is left alone");
+    plat_setenv("AC_ASSUME_FOCUS", focus_env);
+    free(focus_env);
     // The Steam Deck's one-time move from a stored 1080p output_res to the profile's 1280x720 (cfg.c cfg_migrate_deck_res)
     static const char deck_1080[] = "[display]\noutput_res = 1920x1080\n";
     static const char deck_done[] = "[display]\ndeck_res_migrated = 1\n";
