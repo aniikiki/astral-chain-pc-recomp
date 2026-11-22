@@ -1078,10 +1078,6 @@ HOST_OVERRIDE("_ZN2nn7account11GetNicknameEPNS0_8NicknameERKNS0_3UidE", ov_nickn
 static void ov_friends_initialize(Cpu *c) { c->x[0] = 0; }
 HOST_OVERRIDE("_ZN2nn7friends12UserPresence10InitializeERKNS_7account3UidE", ov_friends_initialize);
 
-// nn::fs::EnsureSaveData: the save mount creates the directory on first use (fs_host.c), so the check is a success.
-static void ov_ensure_save_data(Cpu *c) { c->x[0] = 0; }
-HOST_OVERRIDE("_ZN2nn2fs14EnsureSaveDataERKNS_7account3UidE", ov_ensure_save_data);
-
 HOST_OVERRIDE("_ZN2nn4time10InitializeEv", ov_time_initialize);
 HOST_OVERRIDE("_ZN2nn4time8FinalizeEv", ov_time_finalize);
 HOST_OVERRIDE("_ZN2nn4time13IsInitializedEv", ov_time_ready);

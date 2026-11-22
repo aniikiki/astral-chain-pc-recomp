@@ -292,11 +292,12 @@ static void ov_initialize_touch(Cpu *c) {
     ret_x(c, 0);
 }
 
-// int GetTouchScreenState<TouchCount>(TouchScreenState<T> *out): no touches.
+// void GetTouchScreenState<16>(TouchScreenState<16> *out): no touches. The state starts {s64 sampling number, s32
+// count, s32 reserved} and the game reads the count at +8 (main+0x9adb44).
 static void ov_touch_states(Cpu *c) {
     uint32_t *out = arg_p(c, 0);
     if (!out) rt_fatal("nn::hid::GetTouchScreenState: null output");
-    *out = 0;
+    memset(out, 0, 16);
     ret_x(c, 0);
 }
 

@@ -129,7 +129,8 @@ def runtime_files():
     return [p for p in sorted(base.rglob('*')) if p.suffix in RUNTIME_SUFFIXES and p.is_file()
             and not any(p.relative_to(base).as_posix().startswith(skip + '/') for skip in RUNTIME_SKIP)]
 
-PROBES = ['--probe-kernel', '--probe-vkexec', '--probe-nvn-tex', '--probe-shader', '--probe-xess', '--probe-latency']
+PROBES = ['--probe-kernel', '--probe-services', '--probe-fs', '--probe-nvn', '--probe-vkexec', '--probe-nvn-tex',
+          '--probe-shader', '--probe-xess', '--probe-latency']
 
 
 def sha256_file(path):
@@ -668,8 +669,9 @@ def prove(out, cpu='v3'):
         shutil.copy2(out / 'bin' / dll, chk / dll)
     failed = []
     for probe in PROBES:
-        r = subprocess.run([str(chk / 'astralchain.exe'), probe], cwd=chk, env=clean_env(chk), capture_output=True, text=True,
-                           timeout=900)
+        # the game writes UTF-8 (--probe-services logs a Japanese keyboard answer), which cp1252 cannot decode
+        r = subprocess.run([str(chk / 'astralchain.exe'), probe], cwd=chk, env=clean_env(chk), capture_output=True,
+                           encoding='utf-8', errors='replace', timeout=900)
         tail = (r.stdout.strip().splitlines() or [''])[-1]
         print(f'{probe}: exit {r.returncode}: {tail}')
         if r.returncode:

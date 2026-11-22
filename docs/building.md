@@ -299,7 +299,11 @@ A `--cpu v2` build passes the same differential tests with `--cflags=-march=x86-
 too, so they check the software fma the v2 build links rather than the C runtime's.
 
 Runtime probes, each a mode of `astralchain.exe` (the list is at the top of `runtime/main.c`): `--probe-kernel`,
-`--probe-vkexec`, `--probe-nvn-tex` and `--probe-shader` cover most runtime changes. `--probe-shader` and the draw
+`--probe-vkexec`, `--probe-nvn-tex` and `--probe-shader` cover most runtime changes. `--probe-kernel` also checks the
+pause (`runtime/pause.c`). A change to the service overrides passes `--probe-services`, which wants a test for every
+linked override and knows which ones 1.0.1 does not import (`tools/import_census.py` lists the same); one to nn::fs
+passes `--probe-fs` and one to the NVN front end `--probe-nvn`. `make_release.py --prove` and the Linux one run these
+three too (`PROBES`). `--probe-shader` and the draw
 part of `--probe-vkexec` translate shaders of the census below: they look for `build/<ver>/shaders/jobs.json` of the
 exe's own version first, then of the other one. `--probe-xess` runs Intel XeSS once on synthetic images (it passes,
 saying so, without `libxess.dll` or on a GPU XeSS cannot use); a change to `runtime/vk_dlaa.c` or `runtime/vk_xess.c`

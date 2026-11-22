@@ -16,8 +16,8 @@
 // order; the replay thread runs the synchronous submit and present bodies in that order, so every value is signalled
 // by the submission it was handed out for. A paused game's repeats (vk_be_repeat, pause.c) go through the same queue
 // for that order. The game runs at most one frame ahead: queueing present N waits until the
-// replay thread handled present N-1. Calls that read or free GPU state that queued work may use drain the queue first
-// (replay_drain), each cause counted.
+// replay thread handled present N-1; releases and repeats are no presents and do not count (--probe-vkexec checks it).
+// Calls that read or free GPU state that queued work may use drain the queue first (replay_drain), each cause counted.
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -280,7 +280,7 @@ static void replay_main(void *arg) {
         plat_mutex_lock(&rl);
         if (it.kind == RI_SUBMIT) r_submit_done = it.submit_no;
         else if (it.kind == RI_REPEAT) r_repeat = 0;
-        else r_presents_done++;
+        else if (it.kind == RI_PRESENT) r_presents_done++;
         r_busy = 0;
         plat_cond_broadcast(&rcv);
     }

@@ -92,7 +92,8 @@ static void probe_device_and_pools(void) {
     int abi[2] = {0, 0};
     CALL(nvnDeviceGetInteger, U(&dev), 0, U(&abi[0]));
     CALL(nvnDeviceGetInteger, U(&dev), 1, U(&abi[1]));
-    CHECK(abi[0] == 55 && abi[1] >= 15, "device ABI %d.%d", abi[0], abi[1]);
+    // main+0x9f2834..0x9f2860 gives up unless major == 53 and minor >= 310 (cmp #0x35, cmp #0x136)
+    CHECK(abi[0] == 53 && abi[1] >= 310, "device ABI %d.%d", abi[0], abi[1]);
 
     pmem = mem_kernel_alloc(PROBE_POOL_SIZE, 0x1000);
     gmem = mem_kernel_alloc(PROBE_GPOOL_SIZE, 0x1000);
