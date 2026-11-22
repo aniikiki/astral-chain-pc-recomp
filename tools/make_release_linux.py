@@ -40,6 +40,7 @@ check_content runs over it before the script finishes, then the
 folder's own python runs a check-only installer pass and the window's --selftest.
 """
 import argparse
+import hashlib
 import os
 import re
 import shutil
@@ -315,13 +316,17 @@ def build_spirv_tools(llvm, sysroot):
     src = tar_extract('spirv-tools-src', WORK / 'spirv-tools', [f'SPIRV-Tools-{SPIRV_TOOLS_TAG}'], strip=1)
     headers = tar_extract('spirv-headers-src', WORK / 'spirv-headers',
                           [f'SPIRV-Headers-{SPIRV_HEADERS_REV}'], strip=1)
-    build = WORK / f'spirv-tools-{SPIRV_TOOLS_TAG}'
-    run(['cmake', '-S', src, '-B', build, '-DCMAKE_BUILD_TYPE=Release',
-         f'-DCMAKE_C_COMPILER={llvm / "bin" / "clang"}', f'-DCMAKE_CXX_COMPILER={llvm / "bin" / "clang++"}',
-         f'-DCMAKE_SYSROOT={sysroot}', '-DCMAKE_C_COMPILER_TARGET=x86_64-linux-gnu',
-         '-DCMAKE_CXX_COMPILER_TARGET=x86_64-linux-gnu', '-DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld',
-         f'-DPython3_EXECUTABLE={sys.executable}', f'-DSPIRV-Headers_SOURCE_DIR={headers}',
-         '-DBUILD_SHARED_LIBS=OFF', '-DSPIRV_SKIP_TESTS=ON'])
+    configure = ['cmake', '-S', src, '-DCMAKE_BUILD_TYPE=Release',
+                 f'-DCMAKE_C_COMPILER={llvm / "bin" / "clang"}', f'-DCMAKE_CXX_COMPILER={llvm / "bin" / "clang++"}',
+                 f'-DCMAKE_SYSROOT={sysroot}', '-DCMAKE_C_COMPILER_TARGET=x86_64-linux-gnu',
+                 '-DCMAKE_CXX_COMPILER_TARGET=x86_64-linux-gnu', '-DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld',
+                 f'-DPython3_EXECUTABLE={sys.executable}', f'-DSPIRV-Headers_SOURCE_DIR={headers}',
+                 '-DBUILD_SHARED_LIBS=OFF', '-DSPIRV_SKIP_TESTS=ON']
+    # One build directory per configuration: CMake drops every -D option when a cached directory's compiler path
+    # changes (another --out), and does not recompile when a new toolchain or sysroot lands at the same path.
+    key = [*map(str, configure), LLVM_VERSION, SNIPER, SPIRV_TOOLS_TAG, SPIRV_HEADERS_REV]
+    build = WORK / f'spirv-tools-build-{hashlib.sha256(chr(0).join(key).encode()).hexdigest()[:16]}'
+    run([*configure, '-B', build])
     run(['cmake', '--build', build, '--parallel', str(os.cpu_count() or 4), '--target', 'spirv-as', 'spirv-dis'])
     # The 1.21.0 AppImage's parser rejected this capability during the first FSR 4 dispatch.
     shader = ('OpCapability Shader\nOpCapability Float8CooperativeMatrixEXT\n'

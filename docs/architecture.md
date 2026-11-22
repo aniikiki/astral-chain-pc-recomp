@@ -405,8 +405,10 @@ Every guest thread is a host thread. Astral Chain assumes Horizon's scheduler: t
   by default DLSS still makes its feature at its first frame, and its gain is not measured. With `upscaling = fsr4`
   at start the device also enables
   `VK_KHR_compute_shader_derivatives`, which the shaders of AMD's library declare, and `VK_KHR_cooperative_matrix`
-  and `VK_EXT_shader_float8`, which its FP8 model for the RX 9000 names (not run here: no such GPU at hand), when the
-  GPU has them. Astral Chain renders forward: a depth-only prepass
+  and `VK_EXT_shader_float8`, which its FP8 model for the RX 9000 names (not run here: no such GPU at hand; a contributor ran it on an RX 9060 XT,
+  RADV, Mesa 26.3.1, for 30 s through the title movie, once the Linux release's SPIR-V parser knew the FP8 capability:
+  the sniper SDK's SPIRV-Tools rejected `Float8CooperativeMatrixEXT` at the first dispatch, so the release now builds a
+  pinned Khronos SPIRV-Tools), when the GPU has them. Astral Chain renders forward: a depth-only prepass
   writes the scene depth (D32F_S8), the opaque draws and the transparents go into an R11G11B10F light target with it (two images,
   alternating per frame), the bloom chain reads it at half size and down, a composite tonemaps, SMAA anti-aliases and
   the HUD is drawn over the result. The AA arms on the first light-target pass after a prepass and runs, in place on

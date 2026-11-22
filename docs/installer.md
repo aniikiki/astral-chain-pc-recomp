@@ -210,5 +210,4 @@ astralchain.ini.example, VERSION  the default ini; the release string (the repos
 
 ## Later
 
-- Linux release (`tools/make_release_linux.py` does not exist in this port yet).
 - NSZ and XCZ input.

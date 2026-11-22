@@ -332,7 +332,12 @@ same two DLLs: AMD publishes no Linux library, so they are loaded by ffx-vk-linu
 `libffx_vk_linux.so` next to `astralchain` (`tools/ffx_vk_linux.py`) and then fetches the DLLs itself. The library
 needs the development files of OpenSSL 3 or later, libdrm, SPIRV-Tools and the SPIR-V headers, and the Vulkan
 registry (Fedora: `openssl-devel libdrm-devel spirv-tools-devel spirv-headers-devel vulkan-headers`); without them
-the build says which header is missing and goes on without FSR 4. `AC_FSR4_LIB` names another file to load. A change
+the build says which header is missing and goes on without FSR 4. The SPIRV-Tools must know the capability
+`Float8CooperativeMatrixEXT`, which AMD's FP8 model for the RX 9000 declares: a library that does not rejects its
+shader at the first dispatch (`shader normalization failed: Invalid capability operand: 4213`) and the replay thread
+then crashes in the driver. The Linux release therefore builds a pinned Khronos release (`tools/make_release_linux.py`,
+which needs CMake 3.22.1 or newer; Vulkan SDK 1.4.363.0's accepts it), and a developer build uses the system's, which
+must be as recent. `AC_FSR4_LIB` names another file to load. A change
 to `runtime/vk_fsr4.c` wants a run with `AC_UPSCALING=fsr4`, native and upscaled, on an AMD RDNA 2 or newer GPU: its
 log names the library, the upscaler the library made (`fsr4: context ... provider ...`), at start, and the first
 dispatch. Which model AMD's library runs is its own choice from the GPU family; on Linux an AMD integrated GPU it
