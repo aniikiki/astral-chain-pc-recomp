@@ -42,6 +42,7 @@ Report problems as issues, following [CONTRIBUTING.md](CONTRIBUTING.md).
 - Shaders prepared at install instead of during play
 - Ultrawide - From 16:10 to 48:9
 - Ambient Occlusion, and at its top level bounced light: lit surfaces brighten and tint what faces them
+- 5.1 surround sound
 
 ## Installing
 

@@ -7,7 +7,7 @@
 // and the output thread (audio_out.h: WASAPI on Windows, SDL3 elsewhere) drains that ring without taking a guest lock. A
 // buffer counts as played once its samples have left the ring, which is what paces the game's audio thread.
 //
-// 5.1 (AC_AUDIO_OUTPUT=5.1). The game's sound engine is Wwise 2019.1; its Switch sink (main+0x83a110) opens the output
+// 5.1 (AC_AUDIO_OUTPUT=5.1, or auto on an output that takes it: audio_out.h). The game's sound engine is Wwise 2019.1; its Switch sink (main+0x83a110) opens the output
 // for stereo, then reads nn::audio::GetAudioOutChannelCount, which returns the count this service answered in
 // OpenAudioOut, and sets its master mix to it (a table of channel masks for 1 to 8 channels; 6 gives 0x60f, FL FR FC
 // LFE SL SR). So the service answers 6 and the game mixes 5.1 itself: the sound effects, voices and reverbs (the
@@ -41,7 +41,7 @@
 #include "platform/platform.h"
 
 #define AUDOUT_RATE 48000
-#define AUDOUT_CHANNELS 2                     // what the game mixes unless AC_AUDIO_OUTPUT=5.1
+#define AUDOUT_CHANNELS 2                     // what the game mixes unless the output is 5.1 (out_open)
 #define AUDOUT_MAX_CHANNELS 6                 // 5.1: FL FR FC LFE SL SR
 #define AUDOUT_MAX_SESSIONS 8
 #define AUDOUT_MAX_BUFFERS 32                 // the SDK's own queue limit (AudioCore::BufferCount)
@@ -65,7 +65,7 @@
 // thread only moves played.
 static struct {
     int device_ok, opened;
-    int channels;   // what the game mixes, chosen once at the first OpenAudioOut: 2, or 6 with AC_AUDIO_OUTPUT=5.1
+    int channels;   // what the game mixes, chosen once at the first OpenAudioOut (out_open): 2 or 6
     float ring[AUDOUT_RING_FRAMES * AUDOUT_MAX_CHANNELS];
     _Atomic uint64_t played, queued;
     PlatMutex push;
@@ -290,7 +290,7 @@ static void mix_frame(const float *x, int nmix, float *d, int channels, float *p
     }
 }
 
-// The output thread (audio_out.h): frames channels wide (the game's count, or 2 for a fold-down of a 5.1 mix), silence
+// The output thread (audio_out.h): frames channels wide (mixed, the game's count, or 2 for a fold-down of a 5.1 mix), silence
 // when the ring runs dry. A dry ring while the game feeds it means the game's sound thread did not refill in time: the
 // device plays silence, and everything the game streams (a voice, a movie's sound) comes that much later, for good, since
 // the game queues a buffer only when one comes back. Those frames are counted for the log (out_dry_report) and move the
@@ -302,11 +302,11 @@ static void mix_frame(const float *x, int nmix, float *d, int channels, float *p
 // is the same, except that the speaker test still plays (the menu is what paused the game) and that both ends are
 // ramped against clicks: the first request of the pause plays the next PAUSE_RAMP frames fading out without taking
 // them, and the first one after it plays them again fading in, so pauses add no offset between sound and picture.
-static void out_fill(float *dst, int frames, int channels) {
+static void out_fill(float *dst, int frames, int mixed, int channels) {
     static uint64_t dry;   // frames of silence in the dry stretch the last request was in, 0 none (output thread only)
     static const float silence[AUDOUT_MAX_CHANNELS];
     static int was_paused;   // the last request found the game paused (output thread only)
-    const int nmix = out.channels;
+    const int nmix = mixed;   // out.channels once out_open has it; under auto the output knows it first
     uint64_t played = atomic_load_explicit(&out.played, memory_order_relaxed);
     uint64_t queued = atomic_load_explicit(&out.queued, memory_order_acquire);
     uint64_t have = queued > played ? queued - played : 0;
@@ -358,22 +358,27 @@ static void out_fill(float *dst, int frames, int channels) {
     notify_released();
 }
 
-// Opens the output once and chooses what the game mixes: 6 channels with AC_AUDIO_OUTPUT=5.1, else 2. Without an output
+// Opens the output once and chooses what the game mixes: 6 channels with AC_AUDIO_OUTPUT=5.1, 2 with stereo, and under
+// auto (the default) what the output's first device takes (audio_out.h audio_out_auto_channels). Without an output
 // (AC_AUDIO=none, or one that cannot start) the service still answers and every buffer is reported played at once, so
 // the game's audio thread keeps recycling instead of stalling (the same choice audio_mixer.c makes). Runs on a guest
 // thread: opening a device takes tens of ms, so the virtual core is given back meanwhile.
 static void out_open(void) {
     if (out.opened) return;
     out.opened = 1;
-    out.channels = !strcmp(cfg_value("AC_AUDIO_OUTPUT"), "5.1") ? 6 : AUDOUT_CHANNELS;
+    const char *set = cfg_value("AC_AUDIO_OUTPUT");
+    int want = !strcmp(set, "5.1") ? 6 : !strcmp(set, "stereo") ? AUDOUT_CHANNELS : AUDIO_OUT_AUTO;
+    out.channels = want ? want : AUDOUT_CHANNELS;
     const char *mode = cfg_get("AC_AUDIO");
     if ((mode && !strcmp(mode, "none")) || cfg_get("AC_AUDIO_OFF")) {
         rt_log("audout: AC_AUDIO=none: buffers are recycled without a device");
         return;
     }
     int away = kern_core_away();
-    out.device_ok = audio_out_start(out.channels, out_fill);
+    int got = audio_out_start(want, out_fill);
     kern_core_back(&away);
+    out.device_ok = got != 0;
+    if (got) out.channels = got;
 }
 
 int audout_mix_channels(void) { return out.opened ? out.channels : 0; }

@@ -166,7 +166,7 @@ static const CfgMeta metas[] = {
     // what the game mixes (ov_audout.c out_open: fixed when the game opens its output, at start); the 5.1 mix of the
     // output thread (mix_frame): a gain per speaker in dB, the bass of the other five to the subwoofer, and the menu's
     // preset that writes them (custom once one is moved)
-    {"AUDIO_OUTPUT", "stereo", "stereo|5.1", RESTART},
+    {"AUDIO_OUTPUT", "auto", "auto|stereo|5.1", RESTART},   // auto: 5.1 when the output takes it (audio_out.h)
     {"AUDIO_MIX_PRESET", "balanced", "balanced|voices|immersive|custom", LIVE},
     {"AUDIO_FRONT_LEFT", "0", "-12..6", LIVE}, {"AUDIO_FRONT_RIGHT", "0", "-12..6", LIVE},
     {"AUDIO_CENTER", "-2", "-12..6", LIVE}, {"AUDIO_SURROUND_LEFT", "0", "-12..6", LIVE},

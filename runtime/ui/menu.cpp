@@ -956,6 +956,18 @@ static const char *audio_output_line(bool *warn) {
     return line;
 }
 
+// What the output row asks the game to mix at the next start: 6 for 5.1, 2 for stereo, and under auto what the output
+// in use takes now (audio_out.h audio_out_auto_channels), so the restart is offered once it would change the mix (a
+// 5.1 receiver or a headset with spatial sound switched on during the run). 0: not known yet (no output tried).
+static int audio_output_wanted(void) {
+    const char *set = cfg_value("AC_AUDIO_OUTPUT");
+    if (!strcmp(set, "5.1")) return 6;
+    if (!strcmp(set, "stereo")) return 2;
+    AudioOutInfo info;
+    audio_out_info(&info);
+    return info.open ? audio_out_auto_channels(&info) : 0;
+}
+
 // The room from above with the listener in the middle: each speaker of the mix lights up with its sound (the output's
 // peaks since the last frame on a 48 dB scale, falling 24 dB a second) and is outlined while the speaker test plays on
 // it, so a player sees that every speaker gets sound and which one is which. Not a row: the cursor passes it by.
@@ -1054,18 +1066,18 @@ static void tab_sound(float scale) {
     opt_slider("AC_VOLUME", UI_MENU_VOLUME, 0, 100, UI_MENU_VOLUME_DESC, 5, "%.0f %%");
 
     opt_group(UI_MENU_AUDIO_GROUP_OUTPUT);
-    static const UiTextId output[] = {UI_MENU_AUDIO_STEREO, UI_MENU_AUDIO_51};   // cfg.c's values for AUDIO_OUTPUT
+    static const UiTextId output[] = {UI_MENU_AUDIO_AUTO, UI_MENU_AUDIO_STEREO, UI_MENU_AUDIO_51};   // cfg.c's values
 #ifdef _WIN32
     const UiTextId output_desc = UI_MENU_AUDIO_OUTPUT_DESC_WIN;   // names Windows Sonic and the other spatial formats
 #else
     const UiTextId output_desc = UI_MENU_AUDIO_OUTPUT_DESC;
 #endif
-    opt_choice("AC_AUDIO_OUTPUT", UI_MENU_AUDIO_OUTPUT, output, 2, output_desc);
+    opt_choice("AC_AUDIO_OUTPUT", UI_MENU_AUDIO_OUTPUT, output, 3, output_desc);
     bool warn;
     if (const char *line = audio_output_line(&warn)) opt_text_str(line, warn);
     // The output is fixed when the game opens it: while the one asked for differs, offer the restart right here.
-    const int nmix = audout_mix_channels(), want = !strcmp(cfg_value("AC_AUDIO_OUTPUT"), "5.1") ? 6 : 2;
-    bool ask = nmix && want != nmix && opt_button("##restart", UI_MENU_RESTART, UI_MENU_AUDIO_RESTART_DESC);
+    const int nmix = audout_mix_channels(), want = audio_output_wanted();
+    bool ask = nmix && want && want != nmix && opt_button("##restart", UI_MENU_RESTART, UI_MENU_AUDIO_RESTART_DESC);
 
     if (nmix) {
         opt_group(UI_MENU_AUDIO_GROUP_MIX);

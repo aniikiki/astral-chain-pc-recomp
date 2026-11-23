@@ -105,7 +105,11 @@ MacNativeGames cannot run on x86-64 as is: its CPU path executes ARM64 code nati
 - Window, keyboard and mouse: Win32 (`gfx_window.c`, `input_win.c`). Gamepad: SDL3. Audio output: WASAPI on Windows (`audio_out_win.c`), SDL3 elsewhere (`audio_out_sdl.c`). Voice: libopus (BSD). Movies: the SDK's `movie::Decoder` is replaced by a host VP9 decoder over libvpx (BSD, static; `runtime/ov_movie.c`), because FFmpeg from MSYS2 is a GPL build.
 - Sound and 5.1: the game plays everything through `audout:u` (`ov_audout.c`); its Wwise 2019.1 sink asks for stereo,
   then mixes for the channel count `OpenAudioOut` answered, so `audio_output = 5.1` makes the game mix 5.1 itself
-  (FL FR FC LFE SL SR). The effects, voices and reverbs follow the output; the music is authored stereo and stays in
+  (FL FR FC LFE SL SR). `audio_output = auto`, the default since players found the 5.1 better wherever it gets
+  through, picks it from the first output opened (`audio_out_auto_channels`): 5.1 on a mixer of 6 channels or more or
+  with a Windows spatial sound format on, stereo otherwise, including a stereo endpoint that accepts a 6 channel stream
+  only to fold it down. The choice holds for the run (the game reads its channel count once); the menu offers a
+  restart when the output in use would now choose otherwise. The effects, voices and reverbs follow the output; the music is authored stereo and stays in
   front; the LFE gets nothing. Measured on the new game's opening (radio dialogue over traffic, 2 s RMS, 2026-11-21):
   fronts 0.069-0.082 in stereo; in 5.1 fronts 0.049-0.059, centre 0.054-0.079, surrounds 0.005-0.026, LFE 0. The
   voices came out about 3.4 dB louder than in stereo (the mono 2D sounds go to the centre at full level instead of

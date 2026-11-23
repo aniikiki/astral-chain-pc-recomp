@@ -97,7 +97,7 @@ typedef enum {
     UI_MENU_VOLUME, UI_MENU_VOLUME_DESC,
     UI_MENU_AUDIO_OUTPUT, UI_MENU_AUDIO_OUTPUT_DESC,   // audio_output; the description of hosts other than Windows
     UI_MENU_AUDIO_OUTPUT_DESC_WIN,                     // the same on Windows, which names its spatial sound formats
-    UI_MENU_AUDIO_STEREO, UI_MENU_AUDIO_51,
+    UI_MENU_AUDIO_AUTO, UI_MENU_AUDIO_STEREO, UI_MENU_AUDIO_51,
     // The line under the output row, what the device takes: printf of the output's name (SPATIAL), and of its name and
     // its mixer's channel count (TAKES_51, FOLDS_51); then on Windows the spatial sound hint after FOLDS_51, and SENDING
     // (printf: the channels the game sends now).

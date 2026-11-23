@@ -323,11 +323,13 @@
 # audio_prefill_ms = 20
 # Volume in percent (0 to 100), on top of the game's own. Changes while the game runs take effect at once.
 # volume = 100
-# What the game mixes: stereo, or 5.1 (front left and right, centre, LFE, two surrounds). 5.1 needs an output that takes
-# it: a 5.1 or 7.1 output, or on Windows a headset with spatial sound on (Windows Sonic for Headphones, Dolby Atmos for
-# Headphones, DTS Headphone:X: the device's properties in the Windows sound settings). Elsewhere the 5.1 mix is folded
-# down to stereo. The settings menu shows what the output takes. Read at start.
-# audio_output = stereo
+# What the game mixes: auto (the default), stereo, or 5.1 (front left and right, centre, LFE, two surrounds). 5.1 needs
+# an output that takes it: a 5.1 or 7.1 output, or on Windows a headset with spatial sound on (Windows Sonic for
+# Headphones, Dolby Atmos for Headphones, DTS Headphone:X: the device's properties in the Windows sound settings).
+# Elsewhere the 5.1 mix is folded down to stereo. auto picks 5.1 when the default output runs 6 channels or more, or has
+# a spatial sound format on, and stereo otherwise; a stereo output that merely accepts a 6 channel stream stays stereo,
+# since Windows would fold the 5.1 down there. The settings menu shows what the output takes. Read at start.
+# audio_output = auto
 # The 5.1 mix. Changes while the game runs take effect at once. The menu's preset writes the gains below: balanced,
 # voices (clearer dialogue), immersive (stronger surrounds, bass to the subwoofer), or custom once a gain is moved.
 # audio_mix_preset = balanced
