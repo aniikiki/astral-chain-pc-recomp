@@ -301,6 +301,53 @@ int probe_cfg(void) {
     CHECK(input_stick_percent(32767, 0) > 99.99 && input_stick_percent(32767, 0) < 100.01 &&
               input_stick_percent(0, 0) == 0 && fabs(input_stick_percent(3000, -4000) - 5000 * 100.0 / 32767) < 1e-9,
           "stick percent: an axis's end is 100%, the centre 0%, round in between");
+    // The release gate after the menu or a text entry closed (input_map.c): `gate` is one poll of the game
+    {
+        const uint64_t a = 1ull << B_A, b = 1ull << B_B, zl = 1ull << B_ZL, up = 1ull << B_SL_UP, right = 1ull << B_SL_RIGHT;
+        const uint32_t lstick = 0xfu << B_SL_LEFT, rstick = 0xfu << B_SR_LEFT;
+        uint32_t wait;
+        uint64_t got;
+        int32_t gs[4];
+#define GATE(buttons, tilt, x0, y0, x1, y1) \
+    (got = (buttons), gs[0] = (x0), gs[1] = (y0), gs[2] = (x1), gs[3] = (y1), \
+     wait = input_release_gate(wait, input_release_held(got, (tilt)), &got, gs))
+        wait = INPUT_RELEASE_ALL;
+        GATE(0, 0, 955, 0, -300, 120);
+        CHECK(!wait && !got && gs[0] == 955 && gs[1] == 0 && gs[2] == -300 && gs[3] == 120,
+              "release gate: sticks resting off the centre hold nothing and reach the game as they are");
+        wait = INPUT_RELEASE_ALL;
+        GATE(b, 0, 955, 0, 0, 0);
+        CHECK(wait == b && !got && gs[0] == 955, "release gate: the button that closed the menu is hidden");
+        GATE(b | a, 0, 0, 0, 0, 0);
+        CHECK(wait == b && got == a, "release gate: another button pressed meanwhile reaches the game at once");
+        GATE(0, 0, 0, 0, 0, 0);
+        CHECK(!wait && !got, "release gate: released, nothing is waited for");
+        GATE(b, 0, 0, 0, 0, 0);
+        CHECK(!wait && got == b, "release gate: the same button pressed again reaches the game");
+        wait = INPUT_RELEASE_ALL;
+        GATE(zl, 0, 0, 0, 0, 0);
+        GATE(zl | a, 0, 0, 20000, 0, 0);
+        CHECK(wait == zl && got == a && gs[1] == 20000,
+              "release gate: a trigger that never reads released hides itself alone");
+        wait = INPUT_RELEASE_ALL;
+        GATE(up, 0, 0, 30000, 0, 25000);
+        CHECK(wait == lstick && !got && gs[0] == 0 && gs[1] == 0 && gs[3] == 25000,
+              "release gate: a stick held past half its travel reads centred, the other one is the game's");
+        GATE(right, 0, 30000, 0, 0, 0);
+        CHECK(wait == lstick && !got && gs[0] == 0, "release gate: a held stick turned to another direction stays hidden");
+        GATE(0, 0, 12000, 0, 0, 0);
+        CHECK(!wait && gs[0] == 12000, "release gate: back under half its travel the stick is the game's again");
+        wait = INPUT_RELEASE_ALL;
+        GATE(0, 2, 0, 0, 0, 6553);
+        CHECK(wait == rstick && gs[3] == 0, "release gate: keys that tilt a stick part way (walk key) hold it");
+        GATE(0, 0, 0, 0, 0, 0);
+        CHECK(!wait, "release gate: the keys released, the stick is free");
+        wait = 0;
+        GATE(a | up, 3, 0, 30000, 5, 6);
+        CHECK(!wait && got == (a | up) && gs[1] == 30000 && gs[2] == 5 && gs[3] == 6,
+              "release gate: with nothing waited for the sample is untouched");
+#undef GATE
+    }
     // Gamepad layouts (input_map.c)
     CHECK(input_pad_layout_pick("auto", 1, PAD_KIND_NONE) == PAD_LAYOUT_NINTENDO &&
               input_pad_layout_pick(NULL, 0, PAD_KIND_NONE) == PAD_LAYOUT_XBOX,
