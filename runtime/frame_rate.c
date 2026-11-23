@@ -3,7 +3,9 @@
 // (rt_fps_timer) and asks the frame call for present interval 1; this file switches the set while the game runs, keeps
 // the step and the whole 30 fps ticks it adds up to, caps the host's present rate at 60 or 30, and keeps the world clock
 // for scripted input. The whole ticks and the step make the game's per-frame counters and blends frame-rate independent
-// (the input/action timers, hitstop, rumble, the camera smoothing, the dialogue text reveal, the cue scheduler).
+// (the input/action timers, hitstop, rumble, the camera smoothing, the dialogue text reveal, the cue scheduler). A
+// site that needs no helper is patched with instruction words alone, such as the route walker's lead, which keeps its
+// length when the step is below 1.0 (recomp/patches-v101.txt).
 //
 // The game steps a cutscene by a fixed frame, so at 60 presents per second it would play twice as fast as its
 // animation data. Under the 60 fps patch an in-engine cutscene steps by the real time instead and presents at 60

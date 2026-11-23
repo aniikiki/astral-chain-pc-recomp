@@ -206,6 +206,20 @@ site fps60 main 44631c b9402668 @fn:rt_fps_msg_state_w8    # ldr w8,[x19,#0x24] 
 # slow-down scale is active. Channel 3 is the step times the channel scales, so at 60 fps (step 0.5) the test always
 # held. It now compares against the step itself (x0 = the timer object after main+0x91D660), the same at 30 fps.
 site fps60 main 430dd0 1e2e1001 bd40d001   # fmov s1,#1.0 -> ldr s1,[x0,#0xd0]
+# route walker (main+0x1A02E0, the component at +0x14AC0 of a character that walks a route, such as an NPC the player
+# follows): it keeps a target point on the route ahead of the character, at lead factor (+0x1FC) x speed (+0x1F8, times
+# the speed scale +0x1F4 when that is above 1.0) x the step, and moves the point on once the character is that close
+# to it. The character's path follower (main+0x4FD6F0) takes the new point only when it lies 0.5 or more from the one
+# it follows, and the character turns towards the followed point (main+0x389A30, 0.3 of the angle and 30 degrees at
+# most per step). The game's timer never steps below 1.0, so the lead was at least the 1.0 of these characters; at
+# 60 fps (step 0.5) it was 0.5, the followed point was replaced only once the character stood on it, and the heading
+# swung towards a point at its feet. Measured with one recorded input replayed at both rates, on Dr. Moreno walking
+# to the Aegis research institute in File 05: her heading stays within 172..184 degrees at 30 fps and went from 125
+# to 233 at 60 fps, by up to 15 degrees a frame (1.2 at 30 fps), the followed point between 0.00 and 0.53 ahead of her
+# instead of 0.44 and 1.02. The lead now takes the larger of the step and 1.0: 174..184 degrees at 60 fps, 0.6 degrees
+# a frame at most, the point 0.47 to 1.02 ahead, and the 30 fps run is the same to the last digit (the set is off
+# there). s5 holds 1.0 here (fmov at main+0x1A0428) and s4 is dead after the fcsel before the site.
+site fps60 main 1a043c 1e280842 1e254904 1e240842   # fmul s2,s2,s8 -> fmax s4,s8,s5; fmul s2,s2,s4
 # frame-counted cue scheduler (main+0x6A3EC0): the counter adds the whole ticks and an entry fires when its frame is in
 # (old counter, new counter] instead of equal to the counter
 site fps60 main 6a3f28 11000508 @fn:rt_fps_cue_up_w8   # add w8,w8,#1 -> w8 += ticks
