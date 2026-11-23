@@ -24,7 +24,7 @@
 #include "vk.h"
 #include "platform/platform.h"
 
-enum { STICK_MAX = 32767, STICK_DIR = 16384, TRIGGER_ON = 16384, RESCAN_MS = 1000 };
+enum { STICK_MAX = 32767, STICK_DIR = 16384, RESCAN_MS = 1000 };
 
 static PlatMutex lock = PLAT_MUTEX_INIT;
 static int state;                    // 0 not started, 1 running, -1 disabled or SDL failed
@@ -351,6 +351,17 @@ static float stick_dead_get(int s) {
     return stick_dead[s];
 }
 
+// input_pad_trigger_on, live (cfg_version). Up to 1.21.1 it was a fixed half of the travel, which made ZL and ZR wait
+// for a half-pulled trigger on the PC pads (the Switch's ZL and ZR are buttons).
+static int32_t trigger_on = -1;
+static unsigned trigger_on_seen;
+
+static int32_t trigger_on_get(void) {
+    unsigned ver = cfg_version();
+    if (trigger_on < 0 || ver != trigger_on_seen) trigger_on_seen = ver, trigger_on = input_pad_trigger_on();
+    return trigger_on;
+}
+
 // One gamepad stick through the dead zone; SDL's Y grows downwards, the Switch's upwards.
 static void stick(SDL_Gamepad *g, SDL_GamepadAxis ax, SDL_GamepadAxis ay, float dead, int32_t out[2]) {
     input_pad_stick(SDL_GetGamepadAxis(g, ax), -(int32_t)SDL_GetGamepadAxis(g, ay), dead, out);
@@ -583,8 +594,9 @@ static void pick(int32_t *x, int32_t *y, int32_t kx, int32_t ky) {
 static int pad_buttons(SDL_Gamepad *g, uint8_t pd[PAD_COUNT]) {
     if (!g || !SDL_GamepadConnected(g)) return 0;
     for (int p = PAD_SOUTH; p < PAD_ZL; p++) pd[p] = SDL_GetGamepadButton(g, pad_sdl[p]);
-    pd[PAD_ZL] = SDL_GetGamepadAxis(g, SDL_GAMEPAD_AXIS_LEFT_TRIGGER) > TRIGGER_ON;
-    pd[PAD_ZR] = SDL_GetGamepadAxis(g, SDL_GAMEPAD_AXIS_RIGHT_TRIGGER) > TRIGGER_ON;
+    int32_t on = trigger_on_get();
+    pd[PAD_ZL] = SDL_GetGamepadAxis(g, SDL_GAMEPAD_AXIS_LEFT_TRIGGER) > on;
+    pd[PAD_ZR] = SDL_GetGamepadAxis(g, SDL_GAMEPAD_AXIS_RIGHT_TRIGGER) > on;
     for (int p = PAD_ZR + 1; p < PAD_COUNT; p++) pd[p] = SDL_GetGamepadButton(g, pad_sdl[p]);   // false without paddles
     return 1;
 }
@@ -638,6 +650,19 @@ int input_pad_stick_percent(double pct[2]) {
                                      SDL_GetGamepadAxis(pad, SDL_GAMEPAD_AXIS_LEFTY));
         pct[1] = input_stick_percent(SDL_GetGamepadAxis(pad, SDL_GAMEPAD_AXIS_RIGHTX),
                                      SDL_GetGamepadAxis(pad, SDL_GAMEPAD_AXIS_RIGHTY));
+        ok = 1;
+    }
+    plat_mutex_unlock(&lock);
+    return ok;
+}
+
+int input_pad_trigger_percent(double pct[2]) {
+    int ok = 0;
+    pct[0] = pct[1] = 0;
+    plat_mutex_lock(&lock);
+    if (state == 1 && pad && SDL_GamepadConnected(pad)) {
+        pct[0] = SDL_GetGamepadAxis(pad, SDL_GAMEPAD_AXIS_LEFT_TRIGGER) * 100.0 / STICK_MAX;
+        pct[1] = SDL_GetGamepadAxis(pad, SDL_GAMEPAD_AXIS_RIGHT_TRIGGER) * 100.0 / STICK_MAX;
         ok = 1;
     }
     plat_mutex_unlock(&lock);

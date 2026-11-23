@@ -1100,7 +1100,15 @@ static void tab_controls(float scale) {
     opt_slider("AC_RUMBLE_STRENGTH", UI_MENU_RUMBLE_STRENGTH, 0, 300, UI_MENU_RUMBLE_STRENGTH_DESC, 10, "%.0f %%");
     opt_slider("AC_RUMBLE_CURVE", UI_MENU_RUMBLE_CURVE, 0.2f, 1.5f, UI_MENU_RUMBLE_CURVE_DESC, 0.05f, "%.2f");
     opt_toggle("AC_RUMBLE_TRIGGERS", UI_MENU_RUMBLE_TRIGGERS, UI_MENU_RUMBLE_TRIGGERS_DESC);
-    // One row per stick, falling back to TOTK_STICK_DEADZONE (both sticks) while unset. With a gamepad connected each
+    // With a gamepad connected the trigger row shows how far each trigger is pulled now, to set the threshold above a
+    // worn trigger's resting value.
+    double trig[2];
+    char trig_note[64];
+    bool trig_pad = input_pad_trigger_percent(trig) != 0;
+    snprintf(trig_note, sizeof trig_note, menu_text(UI_MENU_TRIGGER_THRESHOLD_NOW), trig[0], trig[1]);
+    opt_slider("AC_TRIGGER_THRESHOLD", UI_MENU_TRIGGER_THRESHOLD, 0, 95, UI_MENU_TRIGGER_THRESHOLD_DESC, 1, "%.0f %%",
+               trig_pad ? trig_note : nullptr);
+    // One row per stick, falling back to AC_STICK_DEADZONE (both sticks) while unset. With a gamepad connected each
     // row shows its stick's deflection now, before the dead zone: a drifting stick's resting value, to set it above.
     double now[2];
     bool pad = input_pad_stick_percent(now) != 0;

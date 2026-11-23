@@ -56,6 +56,9 @@ int input_forced_layout(void);
 // deflection, before the dead zone: the menu shows it on the dead zone rows, so a drifting stick's resting value can be
 // read off. 0 (and both 0) without a connected gamepad. Any thread.
 int input_pad_stick_percent(double pct[2]);
+// How far the open gamepad's left (pct[0]) and right (pct[1]) triggers are pulled now, in percent of their travel: the
+// menu shows it on the trigger threshold row. 0 (and both 0) without a connected gamepad. Any thread.
+int input_pad_trigger_percent(double pct[2]);
 // The label on a face button of the open gamepad (input_map.h PAD_SOUTH..PAD_NORTH, as SDL reports it); PAD_LABEL_NONE for another
 // button, an unknown label or no gamepad. Any thread.
 enum { PAD_LABEL_NONE, PAD_LABEL_A, PAD_LABEL_B, PAD_LABEL_X, PAD_LABEL_Y, PAD_LABEL_CROSS, PAD_LABEL_CIRCLE,

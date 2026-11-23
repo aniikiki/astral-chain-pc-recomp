@@ -291,6 +291,13 @@ int probe_cfg(void) {
     plat_setenv("AC_STICK_DEADZONE", NULL);
     plat_setenv("AC_LSTICK_DEADZONE", NULL);
     plat_setenv("AC_RSTICK_DEADZONE", NULL);
+    plat_setenv("AC_TRIGGER_THRESHOLD", NULL);
+    CHECK(input_pad_trigger_on() == 1638, "trigger threshold: 5% of the travel by default");
+    plat_setenv("AC_TRIGGER_THRESHOLD", "0");
+    CHECK(input_pad_trigger_on() == 0, "trigger threshold: 0 takes the slightest pull");
+    plat_setenv("AC_TRIGGER_THRESHOLD", "100");
+    CHECK(input_pad_trigger_on() == 31129, "trigger threshold: clamped to 95%");
+    plat_setenv("AC_TRIGGER_THRESHOLD", NULL);
     CHECK(input_stick_percent(32767, 0) > 99.99 && input_stick_percent(32767, 0) < 100.01 &&
               input_stick_percent(0, 0) == 0 && fabs(input_stick_percent(3000, -4000) - 5000 * 100.0 / 32767) < 1e-9,
           "stick percent: an axis's end is 100%, the centre 0%, round in between");

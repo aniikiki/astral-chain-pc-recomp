@@ -287,6 +287,9 @@ static const char *const text_en[UI_TEXT_COUNT] = {
     [UI_MENU_LSTICK_DEADZONE] = "Left stick dead zone", [UI_MENU_RSTICK_DEADZONE] = "Right stick dead zone",
     [UI_MENU_STICK_DEADZONE_DESC] = "How far a gamepad stick moves before the game sees it. Raise it if the character or the camera moves on its own: let go of the stick, read \"stick now\" and set the dead zone a few percent above it.",
     [UI_MENU_STICK_DEADZONE_NOW] = "stick now: %.0f %%",
+    [UI_MENU_TRIGGER_THRESHOLD] = "Trigger threshold",
+    [UI_MENU_TRIGGER_THRESHOLD_DESC] = "How far a gamepad trigger (ZL, ZR) is pulled before the game sees it pressed. 0 reacts to the slightest pull. Raise it if a trigger presses on its own: let go of it, read \"triggers now\" and set the threshold a few percent above it.",
+    [UI_MENU_TRIGGER_THRESHOLD_NOW] = "triggers now: L %.0f %%, R %.0f %%",
     [UI_MENU_MOUSE_SENS] = "Mouse camera sensitivity",
     [UI_MENU_MOUSE_SENS_DESC] = "How fast the mouse turns the camera.",
     [UI_MENU_WALK_KEY] = "Walk key",
@@ -742,6 +745,9 @@ static const char *const text_ru[UI_TEXT_COUNT] = {
     [UI_MENU_LSTICK_DEADZONE] = "Мёртвая зона левого стика", [UI_MENU_RSTICK_DEADZONE] = "Мёртвая зона правого стика",
     [UI_MENU_STICK_DEADZONE_DESC] = "Насколько нужно отклонить стик геймпада, чтобы игра это заметила. Увеличьте, если персонаж или камера двигаются сами: отпустите стик, посмотрите «стик сейчас» и поставьте мёртвую зону на несколько процентов выше.",
     [UI_MENU_STICK_DEADZONE_NOW] = "стик сейчас: %.0f %%",
+    [UI_MENU_TRIGGER_THRESHOLD] = "Порог курков",
+    [UI_MENU_TRIGGER_THRESHOLD_DESC] = "Насколько нужно нажать курок геймпада (ZL, ZR), чтобы игра засчитала нажатие. 0 реагирует на малейшее нажатие. Увеличьте, если курок нажимается сам: отпустите его, посмотрите «курки сейчас» и поставьте порог на несколько процентов выше.",
+    [UI_MENU_TRIGGER_THRESHOLD_NOW] = "курки сейчас: L %.0f %%, R %.0f %%",
     [UI_MENU_MOUSE_SENS] = "Чувствительность мыши",
     [UI_MENU_MOUSE_SENS_DESC] = "Как быстро мышь поворачивает камеру.",
     [UI_MENU_WALK_KEY] = "Клавиша шага",
@@ -1116,6 +1122,11 @@ static const char *const text_pt_br[UI_TEXT_COUNT] = {
                                     "se o personagem ou a câmera se moverem sozinhos: solte o analógico, leia \"analógico "
                                     "agora\" e coloque a zona morta alguns por cento acima.",
     [UI_MENU_STICK_DEADZONE_NOW] = "analógico agora: %.0f %%",
+    [UI_MENU_TRIGGER_THRESHOLD] = "Limiar dos gatilhos",
+    [UI_MENU_TRIGGER_THRESHOLD_DESC] = "Quanto um gatilho do controle (ZL, ZR) precisa ser puxado antes que o jogo o veja "
+                                       "pressionado. 0 reage ao menor toque. Aumente se um gatilho pressionar sozinho: "
+                                       "solte-o, leia \"gatilhos agora\" e coloque o limiar alguns por cento acima.",
+    [UI_MENU_TRIGGER_THRESHOLD_NOW] = "gatilhos agora: L %.0f %%, R %.0f %%",
     [UI_MENU_MOUSE_SENS] = "Sensibilidade da câmera no mouse",
     [UI_MENU_MOUSE_SENS_DESC] = "Quão rápido o mouse gira a câmera.",
 
@@ -1635,6 +1646,10 @@ static const char *const text_zh_hans[UI_TEXT_COUNT] = {
     [UI_MENU_STICK_DEADZONE_DESC] = "手柄摇杆要推动多远游戏才会响应。如果角色或视角会自己移动，"
                                     "请调高此值：松开摇杆，查看“当前摇杆”，把死区设得比它高几个百分点。",
     [UI_MENU_STICK_DEADZONE_NOW] = "当前摇杆：%.0f %%",
+    [UI_MENU_TRIGGER_THRESHOLD] = "扳机触发阈值",
+    [UI_MENU_TRIGGER_THRESHOLD_DESC] = "手柄扳机（ZL、ZR）要按下多深游戏才算按下。0 表示轻轻一按就响应。"
+                                       "如果扳机会自己触发，请调高此值：松开扳机，查看“当前扳机”，把阈值设得比它高几个百分点。",
+    [UI_MENU_TRIGGER_THRESHOLD_NOW] = "当前扳机：L %.0f %%，R %.0f %%",
     [UI_MENU_MOUSE_SENS] = "鼠标视角灵敏度",
     [UI_MENU_MOUSE_SENS_DESC] = "鼠标转动视角的速度。",
 

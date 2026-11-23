@@ -381,6 +381,11 @@ float input_pad_deadzone(int stick) {
     return (float)(v < 0 ? 0 : v > 50 ? 50 : v) / 100.f;
 }
 
+int32_t input_pad_trigger_on(void) {
+    double v = cfg_double("AC_TRIGGER_THRESHOLD");
+    return (int32_t)lrint((v < 0 ? 0 : v > 95 ? 95 : v) * STICK_MAX / 100);
+}
+
 double input_stick_percent(int32_t x, int32_t y) {
     return sqrt((double)x * x + (double)y * y) * 100.0 / STICK_MAX;
 }
