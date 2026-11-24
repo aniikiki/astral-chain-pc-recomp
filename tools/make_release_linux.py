@@ -793,7 +793,10 @@ def prove(out, cpu='v3'):
     print(f'prove: newest glibc symbol version {glibc[-1] if glibc else "none"}')
     failed = []
     for probe in ['--selftest', *mr.PROBES]:
-        r = subprocess.run([str(chk / 'astralchain'), probe], cwd=chk, capture_output=True, text=True, timeout=900)
+        # a probe may log bytes that are not UTF-8 (--probe-dlc reads damaged files on purpose): as the Windows
+        # release does, decode them with replacements instead of stopping the prove
+        r = subprocess.run([str(chk / 'astralchain'), probe], cwd=chk, capture_output=True, encoding='utf-8',
+                           errors='replace', timeout=900)
         tail = (r.stdout.strip().splitlines() or [''])[-1]
         print(f'{probe}: exit {r.returncode}: {tail}')
         if r.returncode:

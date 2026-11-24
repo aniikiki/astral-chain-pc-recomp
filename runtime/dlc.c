@@ -150,8 +150,19 @@ typedef struct { const char *s, *file; Arena *a; char err[160]; } XParse;
 static int x_space(char c) { return c == ' ' || c == '\t' || c == '\r' || c == '\n'; }
 static int x_name(char c) { return c && !x_space(c) && c != '/' && c != '>' && c != '=' && c != '<'; }
 
+// s[0..max) as printable ASCII into out (max + 1 bytes): what the log shows of a name or text read from a file that
+// may be damaged or in another encoding. Any other byte is shown as '?', so the log stays valid UTF-8 whatever the
+// input held.
+static const char *printable(const char *s, size_t max, char *out) {
+    size_t i = 0;
+    for (; s[i] && i < max; i++) out[i] = (uint8_t)s[i] >= 0x20 && (uint8_t)s[i] < 0x7f ? s[i] : '?';
+    out[i] = 0;
+    return out;
+}
+
 static XNode *x_fail(XParse *p, const char *what) {
-    if (!p->err[0]) snprintf(p->err, sizeof p->err, "%s near \"%.24s\"", what, p->s);
+    char near[25];
+    if (!p->err[0]) snprintf(p->err, sizeof p->err, "%s near \"%s\"", what, printable(p->s, 24, near));
     return NULL;
 }
 
@@ -778,8 +789,9 @@ static void manifest(const char *dlc, const char *dir) {
             const char *is_live = x_attr(n, "live");
             if (t->nt && is_live && !strcmp(is_live, "1") && nlive < MAX_LIVE) live[nlive++] = t->id;
         } else {
+            char shown[49];
             rt_log("dlc: %s: dlc.xml: <%s> is not understood, lacks an attribute or is one too many; left out", dlc,
-                   n->name);
+                   printable(n->name, 48, shown));
         }
     }
     rt_log("dlc: %s: %d quests, %d texts (%d with input fields), %d training rows, %d tutorial windows", dlc,
@@ -965,7 +977,9 @@ static int build_texts(Pkz *z, Arena *a) {
         uint8_t *raw = pkz_unpack(&z->e[e]);
         Ptd t;
         if (!raw || !ptd_read(raw, (size_t)z->e[e].size, &t, wanted, a)) {
-            rt_log("dlc: %s of Text/Text.pkz is not a text file the builder reads; it keeps the game's texts", name);
+            char shown[97];
+            rt_log("dlc: %s of Text/Text.pkz is not a text file the builder reads; it keeps the game's texts",
+                   printable(name, 96, shown));
             free(raw);
             continue;
         }

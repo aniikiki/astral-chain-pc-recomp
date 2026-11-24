@@ -188,10 +188,18 @@ def part_probe(exe):
     # (the default itself is the settings table's, which the probe and part 1 read)
     env = {k: v for k, v in os.environ.items() if not k.upper().startswith('AC_')}
     env['AC_DLC'] = '0'
-    r = subprocess.run([str(exe), '--probe-dlc'], capture_output=True, encoding='utf-8', errors='replace', env=env,
-                       cwd=exe.parent, timeout=600)
+    raw = subprocess.run([str(exe), '--probe-dlc'], capture_output=True, env=env, cwd=exe.parent, timeout=600)
+    r = subprocess.CompletedProcess(raw.args, raw.returncode, raw.stdout.decode('utf-8', 'replace'),
+                                    raw.stderr.decode('utf-8', 'replace'))
     tail = (r.stdout.strip().splitlines() or [''])[-2:]
     report(r.returncode == 0 and tail[-1] == 'probe-dlc: ok', f'--probe-dlc: exit {r.returncode}: {" / ".join(tail)}')
+    # the probe feeds the builder damaged archives and manifests: what the builder logs of them must still be UTF-8,
+    # which the Linux release's prove decodes strictly (a name or an XML excerpt of a damaged file is shown with '?')
+    try:
+        raw.stdout.decode('utf-8'), raw.stderr.decode('utf-8')
+        report(True, f'--probe-dlc: its output ({len(raw.stderr) // 1024} KiB of log) is valid UTF-8')
+    except UnicodeDecodeError as e:
+        report(False, f'--probe-dlc: its output is not valid UTF-8 ({e})')
     report('probe-dlc: dlc = 0 here: checked that nothing is read' in r.stdout, '--probe-dlc checked the off state')
     for line in r.stderr.splitlines():
         if line.startswith('FAIL'):
