@@ -496,3 +496,16 @@ site wide main 9111d8 9105c260 @fn:rt_wide_anchor 9105c260    # add x0,x19,#0x17
 set  nohud AC_NOHUD_PATCH 0
 site nohud main 9177ec 394346e8 394346e8 @fn:rt_hud_off23_x8   # ldrb w8,[x23,#0xd1]; then x8 = 0 for a HUD instance (x23)
 site nohud main 915ea0 f940b2c8 f940b2c8 @fn:rt_hud_off22_x8   # ldr x8,[x22,#0x160]; the same (x22)
+
+# Photo mode capture (runtime/photo.c). ZR in photo mode runs main+0x57b060 (x2 the photo, x19 the renderer), which
+# records the photo's passes after the frame's scaling pass and before the HUD: they copy the output texel for texel
+# into scene-sized targets and draw the result into a 1280x720 texture that main+0x57b150 reads back a few frames later
+# for the album's JPEG. With the scene set's smaller scene the copy kept the output's top-left corner (58 % of each side
+# at FSR 3 balanced for 1920x1080) and the last pass read the light target before tone mapping. The first site, past the
+# function's checks that a photo is due, keeps its mov and then tells the runtime, which records a copy of the output
+# before the photo's first pass and saves it as a PNG; the second, once the passes are recorded, has the album
+# texture they drew into (the one "save this picture?" shows and the JPEG is read from) take that picture instead
+# (photo.c). Off: the game's capture.
+set  photo AC_PHOTO_PATCH 1
+site photo main 57b098 aa1303e0 aa1303e0 @fn:rt_photo_arm   # mov x0, x19; then the photo is armed
+site photo main 57b110 d0004208 d0004208 @fn:rt_photo_end   # adrp x8, ...; the photo's passes are recorded

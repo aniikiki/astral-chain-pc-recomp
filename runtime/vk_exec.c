@@ -1346,6 +1346,8 @@ static void walk(VkExec *ex, const op_hdr *h, int depth) {
                  h->op == OP_CLEAR_TEX || h->op == OP_CLEAR_BUF) && !ex->in_pass && vk_gpuprof_on())
                 vk_gpuprof_mark(ex, 4, h->op);
             break;
+        case OP_PHOTO: vk_photo_copy(ex, a); break;
+        case OP_PHOTO_FILL: vk_photo_fill(ex, a); break;
         default: rt_fatal("vk: op %s has no replay handler", nvn_op_name(h->op));
         }
         if (split_draws >= split_n) maybe_split(ex);

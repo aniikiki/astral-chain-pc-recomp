@@ -342,6 +342,31 @@ Every guest thread is a host thread. Astral Chain assumes Horizon's scheduler: t
   (`rt_hud_off23_x8`, `rt_hud_off22_x8`). The game keeps updating those layouts, so the HUD is back whole in the
   frame after the set goes off, and the menus, the title screen, the loading screens and the dialogue's lines,
   which are not `hud2` layouts, stay. The game's present switches the set when the setting changed.
+- Photo mode (`photo.c`, `vk_photo.c`, set `photo` of `recomp/patches-v101.txt`, on unless `AC_PHOTO_PATCH=0`).
+  ZR in photo mode runs main+0x57b060, which records passes after the frame's scaling pass and before the HUD: they
+  copy the output texel for texel into targets of the scene's size and draw the result into a 1280x720 RGBA8
+  texture, which main+0x57b150 reads back a few frames later and stores as a JPEG in `GameData.dat`. The copy holds
+  only while the scene is as large as the output, so with the `scene` set of the upscaling modes the album got the
+  output's top-left corner (58 % of each side at FSR 3 balanced for 1920x1080, on the Arc 140T), and its last pass
+  read the light target before tone mapping, a white picture; with `aspect = wide` it stored the wider camera
+  squeezed into 16:9. The set's first site, past the function's checks, asks for a capture: the next
+  `SetRenderTargets` that thread records is preceded by `OP_PHOTO`, naming the last of the window textures set as a
+  target (the frame's output after the scaling pass) and the frame's shape (`res_wide_shape`). The replay copies that
+  image into a host buffer in submission order (no HUD, after any upscaler, at any scene size) and blits the 16:9
+  middle of the picture as shown into an album image of its own. The second site, once the function has recorded its
+  passes, has the next `SetRenderTargets` preceded by `OP_PHOTO_FILL`, which copies that image into the album texture
+  (the photo at x20 names its agl object at +8, the NVNtexture at +0x48), so "save this picture?" shows it and the
+  read-back gets it. A thread of its own then makes a finer album picture (area-averaged in linear light to
+  1280x720), which `JpegEncoder::SetPixelData` (observed) gets in place of the pixels read back, and saves the picture
+  as shown (the output stretched to the frame's shape on one axis, Catmull-Rom) as
+  `screenshots/AstralChain_<date>_<time>.png` next to the executable. The game's album stays 16:9, as its layouts and save slots are. The writer (`png.c`,
+  shared with the flight recorder's thumbnails) picks each row's filter and writes dynamic-Huffman deflate with lazy
+  matching: on a Core Ultra 9 285H a 1920x1080 photo took 3.4 MB in 234 ms on that thread (zlib level 6: 3.3 MB;
+  the former fixed-Huffman writer: 4.7 MB). Checked with one recorded photo replayed in Harmony Square: FSR 3 balanced,
+  XeSS performance at 2560x1440, no upscaler with SMAA off, and `aspect = wide` in 2560x1080 and 1920x1200 windows all
+  gave the whole picture to "save this picture?" and the album, and a PNG of 1920x1080, 2560x1440, 2560x1080 or
+  1920x1200. One copy of the output and two small blits per photo, nothing on other frames. If the finer picture is
+  not ready when the game encodes (no Vulkan back end, the copy failed, 2 s gone) the JPEG keeps what was read back.
 - HDR (`hdr = 1`, `vk_hdr.c`). The game tonemaps its scene (Uchimura's curve, or Hable's, then a 16³ colour LUT) into
   an R11G11B10F target at the output's size, sRGB-encoded; its SMAA reads that target and writes the 8-bit window
   texture it presents, and the HUD and menus draw into the window texture afterwards. With HDR on, the tonemap's

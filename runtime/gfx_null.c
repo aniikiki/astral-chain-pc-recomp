@@ -9,6 +9,7 @@
 #include "gfx.h"
 #include "host.h"
 #include "nvn_api.h"
+#include "photo.h"
 
 GfxStats gfx_counters;
 
@@ -76,6 +77,7 @@ static void null_replay(uint64_t handle) {
             break;
         }
         case OP_REPORT_COUNTER: null_report(((const p_report_counter *)a)->addr); break;
+        case OP_PHOTO: photo_capture_failed(((const p_photo *)a)->seq, "no GPU back end"); break;
         case OP_COPY_B2B: {
             const p_copy_b2b *b = a;
             void *s = null_cpu_addr(b->src, b->size, "buffer copy source"), *d = null_cpu_addr(b->dst, b->size, "buffer copy target");

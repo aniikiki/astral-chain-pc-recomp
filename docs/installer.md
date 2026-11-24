@@ -53,6 +53,7 @@ The install folder (`main.c` `portable_paths()` reads this layout; it stays port
   profile/                              saves
   mods/                                 the player's mods, one folder per mod (created by the menu's "Open mods folder")
   logs/                                 astralchain.log of the last run, astralchain.1.log to astralchain.4.log before it
+  screenshots/                          the photo mode's PNGs (photo.c), made at the first photo; an update leaves it
   build-cache/                          what the setup keeps to rebuild the game for the mods: generated C, objects,
                                         logs and status files
   astralchain-install.json              what built this folder: release version, input hashes, finished steps

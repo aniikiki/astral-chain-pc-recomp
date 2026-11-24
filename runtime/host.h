@@ -334,6 +334,7 @@ void res_drawdist_live(void);                              // AC_DRAW_DISTANCE t
 // window's size with each new swapchain.
 float res_wide_tick(void);
 void res_wide_window(unsigned w, unsigned h);
+float res_wide_shape(void);                                // the shape of the frame being built, 0 for the picture's own
 // The gameplay HUD (the hud setting, set nohud): the game's present switches the set when the setting changed.
 void res_hud_tick(void);
 // ---- code patches (patches.c) and the frame step (frame_rate.c)
