@@ -132,10 +132,11 @@ static const char *const text_en[UI_TEXT_COUNT] = {
                                "RX 6000 or newer. Automatic takes DLSS where it can run and FSR 3 elsewhere. DLSS, XeSS "
                                "and FSR 4 chosen here take effect after a restart. The HUD is not touched.",
     [UI_MENU_UPSCALING_DESC_OTHER] = "A temporal upscaler in place of the game's anti-aliasing: smoother edges and less "
-                                     "shimmer, and with a mode below Native more frames per second. AMD FSR 3 runs on "
-                                     "any GPU, AMD FSR 4 on a Radeon RX 6000 or newer; Automatic is FSR 3 here (NVIDIA "
-                                     "DLSS and Intel XeSS are Windows only). FSR 4 chosen here takes effect after a "
-                                     "restart. The HUD is not touched.",
+                                     "shimmer, and with a mode below Native more frames per second. NVIDIA DLSS needs "
+                                     "an NVIDIA RTX GPU and libnvidia-ngx-dlss.so next to astralchain, AMD FSR 3 runs "
+                                     "on any GPU, AMD FSR 4 on a Radeon RX 6000 or newer; Automatic takes DLSS where it "
+                                     "can run and FSR 3 elsewhere (Intel XeSS is Windows only). DLSS and FSR 4 chosen "
+                                     "here take effect after a restart. The HUD is not touched.",
     [UI_MENU_UPSCALING_OFF] = "Off", [UI_MENU_UPSCALING_AUTO] = "Automatic",
     [UI_MENU_UPSCALING_UNAVAILABLE] = "not available here",
     [UI_MENU_UPSCALING_INSTEAD] = "not available here: %s in use",
@@ -598,10 +599,11 @@ static const char *const text_ru[UI_TEXT_COUNT] = {
                                "RX 6000 и новее. «Автоматически» берёт DLSS, где он может работать, иначе FSR 3. DLSS, "
                                "XeSS и FSR 4, выбранные здесь, действуют после перезапуска. Интерфейс не затрагивается.",
     [UI_MENU_UPSCALING_DESC_OTHER] = "Временной апскейлер вместо сглаживания игры: ровнее края и меньше мерцания, а в "
-                                     "режиме ниже «Родного» — больше кадров в секунду. AMD FSR 3 работает на любой "
-                                     "видеокарте, AMD FSR 4 — на Radeon RX 6000 и новее; «Автоматически» здесь — FSR 3 "
-                                     "(NVIDIA DLSS и Intel XeSS — только в Windows). FSR 4, выбранный здесь, действует "
-                                     "после перезапуска. Интерфейс не затрагивается.",
+                                     "режиме ниже «Родного» — больше кадров в секунду. NVIDIA DLSS нужны видеокарта "
+                                     "NVIDIA RTX и libnvidia-ngx-dlss.so рядом с astralchain, AMD FSR 3 работает на "
+                                     "любой видеокарте, AMD FSR 4 — на Radeon RX 6000 и новее; «Автоматически» берёт "
+                                     "DLSS, где он работает, иначе FSR 3 (Intel XeSS — только в Windows). DLSS и FSR 4, "
+                                     "выбранные здесь, действуют после перезапуска. Интерфейс не затрагивается.",
     [UI_MENU_UPSCALING_OFF] = "Выкл.", [UI_MENU_UPSCALING_AUTO] = "Автоматически",
     [UI_MENU_UPSCALING_UNAVAILABLE] = "недоступно здесь",
     [UI_MENU_UPSCALING_INSTEAD] = "недоступно здесь: используется %s",
@@ -1398,10 +1400,12 @@ static const char *const text_pt_br[UI_TEXT_COUNT] = {
                                "pode rodar e o FSR 3 nos outros casos. DLSS, XeSS e FSR 4 escolhidos aqui valem após "
                                "reiniciar. O HUD não é afetado.",
     [UI_MENU_UPSCALING_DESC_OTHER] = "Um upscaler temporal no lugar do antisserrilhado do jogo: bordas mais suaves e menos "
-                                     "cintilação e, com um modo abaixo de Nativo, mais quadros por segundo. AMD FSR 3 roda "
-                                     "em qualquer placa, AMD FSR 4 em uma Radeon RX 6000 ou mais recente; Automático é "
-                                     "o FSR 3 aqui (NVIDIA DLSS e Intel XeSS são somente no Windows). FSR 4 escolhido "
-                                     "aqui vale após reiniciar. O HUD não é afetado.",
+                                     "cintilação e, com um modo abaixo de Nativo, mais quadros por segundo. NVIDIA DLSS precisa "
+                                     "de uma placa NVIDIA RTX e do libnvidia-ngx-dlss.so ao lado do astralchain, AMD FSR "
+                                     "3 roda em qualquer placa, AMD FSR 4 em uma Radeon RX 6000 ou mais recente; "
+                                     "Automático usa o DLSS onde ele roda e o FSR 3 nos outros casos (Intel XeSS é "
+                                     "somente no Windows). DLSS e FSR 4 escolhidos aqui valem após reiniciar. O HUD não "
+                                     "é afetado.",
     [UI_MENU_UPSCALING_OFF] = "Desligado", [UI_MENU_UPSCALING_AUTO] = "Automático",
     [UI_MENU_UPSCALING_UNAVAILABLE] = "indisponível aqui",
     [UI_MENU_UPSCALING_INSTEAD] = "indisponível aqui: %s em uso",
@@ -1995,9 +1999,10 @@ static const char *const text_zh_hans[UI_TEXT_COUNT] = {
                                "AMD FSR 4 需要 Radeon RX 6000 或更新的显卡。“自动”在可运行时使用 DLSS，否则使用 FSR 3。"
                                "在此选择的 DLSS、XeSS 和 FSR 4 重启后生效。HUD 不受影响。",
     [UI_MENU_UPSCALING_DESC_OTHER] = "以时间性超分辨率取代游戏的抗锯齿：边缘更平滑、闪烁更少；选择低于“原生”的模式还能提高"
-                                     "帧率。AMD FSR 3 可在任何显卡上运行，AMD FSR 4 需要 Radeon RX 6000 或更新的显卡；此处“自动”即 "
-                                     "FSR 3（NVIDIA DLSS 和 Intel XeSS 仅限 Windows）。在此选择的 FSR 4 重启后生效。"
-                                     "HUD 不受影响。",
+                                     "帧率。NVIDIA DLSS 需要 NVIDIA RTX 显卡，并将 libnvidia-ngx-dlss.so 放在 astralchain 旁边；"
+                                     "AMD FSR 3 可在任何显卡上运行，AMD FSR 4 需要 Radeon RX 6000 或更新的显卡；“自动”在 DLSS "
+                                     "可用时使用 DLSS，否则使用 FSR 3（Intel XeSS 仅限 Windows）。在此选择的 DLSS 和 FSR 4 重启后"
+                                     "生效。HUD 不受影响。",
     [UI_MENU_UPSCALING_OFF] = "关闭", [UI_MENU_UPSCALING_AUTO] = "自动",
     [UI_MENU_UPSCALING_UNAVAILABLE] = "此处不可用",
     [UI_MENU_UPSCALING_INSTEAD] = "此处不可用：使用 %s",
