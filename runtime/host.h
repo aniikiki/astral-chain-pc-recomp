@@ -306,6 +306,7 @@ int res_heapdef_build(const void *in, size_t n, void **out, size_t *out_n);   //
                                                            // the grown heaps, malloc'd; 0 = cannot (logged)
 void res_heapdef_served(void);                             // romfs.c serves the grown table
 void res_init(void);                                       // after rt_patches_init: the patch page and the sets
+void quest_init(void);                                     // after rt_patches_init: the training menu's added rows (quest.c)
 // Upscaling on 1.0.1 (the scene set): the scene the game renders (the game resolution unless an upscaling mode reduced
 // it at start), whether it is reduced, and the scene a mode ("native", "quality" ... "ultra_performance") gives at the
 // game resolution (the menu's mode row).
@@ -384,6 +385,7 @@ void rt_boot(void);                                        // boot.c
 int probe_cfg(void);                                       // cfg_probe.c
 int probe_dpi(void);                                       // dpi_probe_win.c (Windows only)
 int probe_mods(void);                                      // mods_probe.c
+int probe_dlc(void);                                       // dlc_probe.c
 int probe_loader(void), probe_kernel(void), probe_ipc(void), probe_services(void), probe_fs(void);
 int probe_libc(void);                                      // libc_probe.c
 int probe_gfx_abi(void);                                   // gfx_abi_probe.c

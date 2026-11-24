@@ -10,6 +10,10 @@ void input_poll(uint64_t *buttons, int32_t *lx, int32_t *ly, int32_t *rx, int32_
 // reports nothing; input_block(0) when it closes: what is held then stays hidden until it is released (the release
 // gate below).
 void input_poll_ui(uint64_t *buttons, int32_t *lx, int32_t *ly, int32_t *rx, int32_t *ry);
+// 1 while the key or mouse button (input_map.h KEY_*) was down at the last keyboard read, whatever it is bound to: the
+// game's window in front, a mouse button only with the cursor captured, and never while the menu or a text entry is
+// open. Any thread.
+int input_key_held(int key);
 void input_block(int on);
 // The release gate (input_map.c, pure). The press that closes the menu or a text entry is still down when the game
 // reads its pad again, and the game must not take it for a press of its own. So every input held at that moment

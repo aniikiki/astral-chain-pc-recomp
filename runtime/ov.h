@@ -12,6 +12,9 @@
 int ov_handheld(void);                     // AC_OPERATION_MODE=handheld (default docked); fatal on another value
 const char *ov_language(void);             // the game's language, a Switch language code ("en-US", "zh-Hans", ...)
 
+// ---- ov_input.c
+uint64_t ov_pad_buttons(void);             // the one player's npad buttons at the game's last read (any thread)
+
 // ---- ov_settings.c
 void settings_server_handler(IpcSession *s, const IpcRequest *rq, IpcResponse *rs);   // "set" (settings:u)
 

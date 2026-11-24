@@ -52,6 +52,9 @@ The install folder (`main.c` `portable_paths()` reads this layout; it stays port
   shader-prepared-driver.txt            the GPU driver caches that hold them (a start with another one rebuilds it)
   profile/                              saves
   mods/                                 the player's mods, one folder per mod (created by the menu's "Open mods folder")
+  dlc/                                  the DLCs' XML sources (docs/dlc.md) and their guide, copied from the release
+                                        at every install and update; read only with dlc = 1. The player's own DLC
+                                        folders there are left alone
   logs/                                 astralchain.log of the last run, astralchain.1.log to astralchain.4.log before it
   screenshots/                          the photo mode's PNGs (photo.c), made at the first photo; an update leaves it
   build-cache/                          what the setup keeps to rebuild the game for the mods: generated C, objects,
@@ -184,6 +187,7 @@ bin/                  ac_xlate.exe (+ .id), hactool.exe, SDL3.dll, libopus-0.dll
                       two DLLs with libffx_vk_linux.so, which runs them)
 licenses/             the licence files of everything bundled
 THIRD_PARTY_NOTICES.md
+dlc/                  the DLCs (docs/dlc.md): XML and their guide, copied into the install folder by the last step
 astralchain.ini.example, VERSION  the default ini; the release string (the repository's VERSION plus the commit)
 ```
 

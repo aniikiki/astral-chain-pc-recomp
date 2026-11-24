@@ -671,6 +671,16 @@ int input_pad_trigger_percent(double pct[2]) {
     return ok;
 }
 
+// The keys and mouse buttons the last keyboard read saw down, a bit per KEY_* id (input_key_held): what the bindings
+// were applied to, so a mouse button counts only while the cursor is captured, and nothing while another window is in
+// front (poll_merged).
+_Static_assert(KEY_COUNT <= 128, "keys_seen holds 128 keys");
+static volatile int64_t keys_seen[2];
+static void keys_seen_set(uint64_t lo, uint64_t hi) {
+    __atomic_store_n(&keys_seen[0], (int64_t)lo, __ATOMIC_RELAXED);
+    __atomic_store_n(&keys_seen[1], (int64_t)hi, __ATOMIC_RELAXED);
+}
+
 // Under lock, the window in front: the keyboard's and the mouse's buttons and sticks ORed and picked into b, sl, sr.
 // *tilt: bit 0 set when keys tilt the left stick, bit 1 the right one (input_release_held: with the walk key they
 // tilt it part way, under the direction bits).
@@ -689,6 +699,9 @@ static void kb_read(uint64_t *b, int32_t sl[2], int32_t sr[2], int *tilt) {
         if (!cap || mouse_ignore[k]) down[k] = 0;
     }
     was_captured = cap;
+    uint64_t seen[2] = {0, 0};
+    for (int k = 1; k < KEY_COUNT; k++) seen[k >> 6] |= (uint64_t)down[k] << (k & 63);
+    keys_seen_set(seen[0], seen[1]);
     *b |= input_map_buttons(down);
     int32_t k[2];
     walk_get();
@@ -730,6 +743,7 @@ static void poll_merged(int who, uint64_t *buttons, int32_t *lx, int32_t *ly, in
             if ((b & xy) && (b & xy) != xy) b ^= xy;
         }
         if (kb && ikb_foreground()) kb_read(&b, sl, sr, &tilt);
+        else if (kb) keys_seen_set(0, 0);
     }
     script_apply(who > 0, &b, sl, sr);
     if (who == (players > 1 ? 0 : -1)) rec_apply(b, sl, sr);
@@ -881,6 +895,11 @@ static inline void game_gate(int who, uint32_t held, uint64_t *buttons, int32_t 
     }
     uint32_t w = __atomic_load_n(&g_wait[who + 1], __ATOMIC_RELAXED);
     if (__builtin_expect(w != 0, 0)) game_gate_closed(who, w, held, buttons, lx, ly, rx, ry);
+}
+
+int input_key_held(int key) {
+    if (key <= KEY_NONE || key >= KEY_COUNT || (g_block | g_menu)) return 0;
+    return (int)((uint64_t)__atomic_load_n(&keys_seen[key >> 6], __ATOMIC_RELAXED) >> (key & 63) & 1);
 }
 
 void input_poll(uint64_t *buttons, int32_t *lx, int32_t *ly, int32_t *rx, int32_t *ry) {

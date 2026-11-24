@@ -1,6 +1,7 @@
 // Text the host shows the player (runtime/ui_text.c): one catalog, keyed by stable ids. The software keyboard reads it
 // in the game's language (ui_text); the menu and the performance overlay read it in the menu language (menu_text).
 #pragma once
+#include <stddef.h>
 
 typedef enum {
     // Software keyboard
@@ -80,6 +81,11 @@ typedef enum {
     UI_MENU_MODS_INSTALLED,
     UI_MENU_MODS_NONE,           // no mod folder yet: where to unpack one
     UI_MENU_MODS_OPEN, UI_MENU_MODS_OPEN_DESC,
+    // DLCs (dlc.c): the dlc setting, the folder, the DLCs loaded at this start
+    UI_MENU_DLC_GROUP, UI_MENU_DLC, UI_MENU_DLC_DESC,
+    UI_MENU_DLC_LOADED,          // printf: the names of the DLCs loaded at this start
+    UI_MENU_DLC_NONE,            // dlc on, but no DLC folder was found at this start
+    UI_MENU_DLC_OPEN, UI_MENU_DLC_OPEN_DESC,
     UI_MENU_MODS_ROW_DESC,       // printf: files it replaces, files it adds (as of this start)
     UI_MENU_MODS_OVERRIDDEN,     // printf: files a higher mod serves instead, that mod's name
     UI_MENU_MODS_MOVE_HINT,
@@ -271,3 +277,8 @@ const char *ui_text_lang(const char *switch_code);
 // unset, the system UI language when the catalog has menu text for it (English, Russian, Brazilian Portuguese,
 // Simplified Chinese), else English. Follows a live change of the setting.
 const char *menu_text(UiTextId id);
+// The inputs bound to a Switch action (input_map.h B_*) as the Controls tab's remapping rows label them, in the menu
+// language: its keys with " / " between two ("Left mouse / Z"), the gamepad button of the layout the rows show when
+// no key is bound, "" when neither is. Returns the length written to out (UTF-8, cut to n - 1 bytes). Any thread
+// (ui/binds_page.cpp; it copies the tables under the input lock).
+size_t ui_bind_label(int action, char *out, size_t n);

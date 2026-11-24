@@ -509,3 +509,41 @@ site nohud main 915ea0 f940b2c8 f940b2c8 @fn:rt_hud_off22_x8   # ldr x8,[x22,#0x
 set  photo AC_PHOTO_PATCH 1
 site photo main 57b098 aa1303e0 aa1303e0 @fn:rt_photo_arm   # mov x0, x19; then the photo is armed
 site photo main 57b110 d0004208 d0004208 @fn:rt_photo_end   # adrp x8, ...; the photo's passes are recorded
+
+# Quest script conditions answered by the host (runtime/quest.c). The game evaluates a quest command's condition at
+# main+0x47f370 (quest, task, command; the command's typeIF at +4): it sets w20 = 1, subtracts 1 from the type and
+# branches to the return when the result is above 37, so the type 0 ("always") and any type the game does not know
+# answer true. The site keeps that branch and calls the helper before it, which writes w20 for the types it defines
+# (0x10000 + buttons: all held; 0x20000 + buttons: not all held) and nothing for the others; the cmp's flags stay for
+# the branch; 0x30000 / 0x40000 + two key codes test keys and mouse buttons the same way (runtime/quest.c has the
+# codes). Both of the game's line runners (main+0x47d700 and main+0x47db60) evaluate through this function. No
+# quest of the game uses a type above 38 (64 202 commands in the 414 quests of quest.pkz), so nothing changes without
+# a quest that asks for one. On with the setting dlc = 1 (the Mods tab's "Load DLC", off by default; runtime/dlc.c), as
+# the next sets: off, the game runs its own code at every site.
+set  quest AC_DLC 0
+site quest main 47f398 54006b28 @fn:rt_quest_if 54006b28   # b.hi 0x4800fc; before it w20 = a host condition's answer
+# Tutorial windows of the port (runtime/quest.c, windows[]). The game shows a tutorial window (action 18 with a number
+# from 0xa000) only when its number is in its table of 215; both lookups (main+0x6101c0 when a window opens,
+# main+0x611870 when a shown one changes) end with w20 = 0xffff for a number not found, which closes the window. The
+# sites call the helper there instead: for a window of the port it sets w21 = -1 (in no chapter of the archive) and
+# w11 = 1, and the cbnz goes back to the found path (mov w1, w20; bl the page count), three instructions before the
+# site; for any other number it sets w20 = 0xffff and w11 = 0 and the code goes on as before.
+site quest main 6102b4 32003ff4 @fn:rt_quest_window 35ffffab   # mov w20,#0xffff -> the helper; cbnz w11, 0x6102a8
+site quest main 611918 32003ff4 @fn:rt_quest_window 35ffffab   # the same; cbnz w11, 0x61190c
+# Texts the port fills in (runtime/quest.c, live_ids[]). Every text lookup of the game ends at main+0x8fbf60, which
+# stores the found string's address to the result (x1 + 8) last; the site keeps that store and calls the helper,
+# which for an id of the port (w3 its hash) points the result at the text with each {ACTION} field replaced by the
+# inputs bound to that action, as the menu's Controls tab labels them. Any other text is left as found.
+site quest main 8fc090 f9000428 f9000428 @fn:rt_quest_text      # str x8, [x1, #8]; then the helper
+
+# Training menu rows added by the port (runtime/quest.c, quest_init: the game's 29 rows and the added ones on the
+# patch page, +0x400, and main's GOT slot at main+0xdbbdc0 pointed at them). The sites count 30 rows, find the added
+# row of a value, count it in the main list and start its quest. On with the setting dlc = 1, as the set quest;
+# quest_init switches it off when no DLC adds a row or the table is not the one it expects.
+set  questmenu AC_DLC 0
+site questmenu main 6bbbd8 710076bf 71007abf                    # cmp w21,#29 -> #30: the widget's fill
+site questmenu main 4bce98 f100769f f1007a9f                    # cmp x20,#29 -> #30: the row of the chosen value
+site questmenu main 4bc804 1a9f0100 @fn:rt_quest_menu_index_w0  # csel w0,w8,wzr,eq -> row 28 or an added row's, else 0
+site questmenu main 4bd250 1a940680 1a940680 @fn:rt_quest_menu_count_w0   # cinc w0,w20,ne; then + the added rows (main list)
+site questmenu main 4bc91c b868d933 b868d933 @fn:rt_quest_menu_quest_w19  # ldr w19,[x9,w8,sxtw #2]; then an added row's quest
+site questmenu main 4bd42c b868d934 b868d934 @fn:rt_quest_menu_quest_w20  # ldr w20,[x9,w8,sxtw #2]; the same

@@ -25,7 +25,7 @@ The folder holds:
                amd_fidelityfx_upscaler_vk.dll (tools/fsr4_sdk.py's pins, the Windows release's files) and
                libffx_vk_linux.so, which runs them (runtime/third_party/ffx-vk-linux; OpenSSL's libcrypto and
                SPIRV-Tools inside it)
-    recomp/, tools/, data/, installer/, licenses/, THIRD_PARTY_NOTICES.md, astralchain.ini.example, VERSION
+    recomp/, tools/, data/, installer/, dlc/, licenses/, THIRD_PARTY_NOTICES.md, astralchain.ini.example, VERSION
     AppRun, astralchain-setup.desktop, astralchain-setup.png   the AppImage entry: python/bin/python3 -m installer.gui
     recomplauncher.json   at the AppDir root, where RecompLauncher reads it from the AppImage without mounting it
 

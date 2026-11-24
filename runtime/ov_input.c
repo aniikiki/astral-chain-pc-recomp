@@ -46,6 +46,9 @@ static int64_t sample;
 // by input_poll_player (coop_player).
 static uint32_t ids_supported = ~0u;   // bit per id: players 1-8 bits 0-7, other (0x10) bit 8, handheld (0x20) bit 9
 static int coop;                       // lock
+static volatile int64_t pad_buttons;   // the one player's buttons at the game's last read (ov_pad_buttons)
+
+uint64_t ov_pad_buttons(void) { return (uint64_t)__atomic_load_n(&pad_buttons, __ATOMIC_RELAXED); }
 
 static uint32_t id_bit(uint32_t id) { return id < 8 ? 1u << id : id == 0x10 ? 1u << 8 : id == 0x20 ? 1u << 9 : 0; }
 
@@ -199,6 +202,7 @@ static int npad_state(uint32_t want, uint32_t id, NpadState *s) {
     if (live) {
         s->attributes = ATTR_CONNECTED;
         input_poll(&s->buttons, &s->lx, &s->ly, &s->rx, &s->ry);
+        __atomic_store_n(&pad_buttons, (int64_t)s->buttons, __ATOMIC_RELAXED);
     }
     if (player >= 0) live = coop_player(player, want == STYLE_JOY_RIGHT, s);
     return live;

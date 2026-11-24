@@ -39,6 +39,7 @@ extern "C" {
 #include "audio_out.h"
 #include "cheats.h"
 #include "cfg.h"
+#include "dlc.h"
 #include "fs.h"
 #include "input.h"
 #include "input_map.h"
@@ -1220,6 +1221,29 @@ static void tab_mods(float scale) {
         bool ok = mods_dir()[0] != 0;
         if (ok) plat_file_mkdir_p(mods_dir());
         if (!ok || !plat_open_folder(mods_dir())) open_failed = plat_now_ns() + 3000000000ull;
+    }
+    // DLCs (dlc.c): read at start only with the setting on; the row changes it for the next start
+    opt_group(UI_MENU_DLC_GROUP);
+    opt_toggle("AC_DLC", UI_MENU_DLC, UI_MENU_DLC_DESC);
+    if (dlc_started_on() && cfg_bool("AC_DLC")) {   // what this start loaded, while the setting still says so
+        char names[512] = "", line[640];
+        size_t k = 0;
+        for (int i = 0; dlc_name(i) && k < sizeof names; i++)
+            k += (size_t)snprintf(names + k, sizeof names - k, "%s%s", i ? ", " : "", dlc_name(i));
+        if (*names) {
+            snprintf(line, sizeof line, menu_text(UI_MENU_DLC_LOADED), names);
+            opt_text_str(line);
+        } else {
+            opt_text(UI_MENU_DLC_NONE);
+        }
+    }
+    static uint64_t dlc_open_failed;
+    if (opt_button("##dlc_open", UI_MENU_DLC_OPEN, UI_MENU_DLC_OPEN_DESC,
+                   plat_now_ns() < dlc_open_failed ? menu_text(UI_MENU_ACTION_FAILED) : "")) {
+        char dir[2100];
+        bool ok = dlc_dir(dir, sizeof dir) != 0;
+        if (ok) plat_file_mkdir_p(dir);
+        if (!ok || !plat_open_folder(dir)) dlc_open_failed = plat_now_ns() + 3000000000ull;
     }
     opt_end();
     if (rebuild) {

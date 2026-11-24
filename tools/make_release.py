@@ -16,6 +16,7 @@ cached in toolchain/release-dl/ and checked against the sha256 in PINS; a mismat
     bin/       ac_xlate.exe (+ .id), hactool.exe, SDL3.dll (upstream), libopus-0.dll, libxess.dll (Intel XeSS SDK),
                amd_fidelityfx_loader_vk.dll and amd_fidelityfx_upscaler_vk.dll (AMD FSR SDK, FSR 4), ninja.exe
     recomp/, tools/, data/, installer/, licenses/, THIRD_PARTY_NOTICES.md, astralchain.ini.example
+    dlc/       the DLCs (docs/dlc.md): XML sources and their guide, which the installer copies next to astralchain.exe
     recomplauncher.json   what RecompLauncher does with the release (installer/progress.py), prepare.version = VERSION
     VERSION    the repository's VERSION plus the commit, 0.1.0+973c626; the installer's release string
     Astral Chain-Setup.exe  installer/launcher/launcher.c built with llvm/ (-mwindows): starts python/pythonw.exe -m installer.gui
@@ -130,7 +131,7 @@ def runtime_files():
             and not any(p.relative_to(base).as_posix().startswith(skip + '/') for skip in RUNTIME_SKIP)]
 
 PROBES = ['--probe-kernel', '--probe-services', '--probe-fs', '--probe-nvn', '--probe-vkexec', '--probe-nvn-tex',
-          '--probe-shader', '--probe-xess', '--probe-latency']
+          '--probe-shader', '--probe-xess', '--probe-latency', '--probe-dlc']
 
 
 def sha256_file(path):
@@ -492,6 +493,9 @@ def build_sources(out, profdata):
     # The controller button mods' sources (tools/make_prompts_folders.py repacks them into the
     # romfs-patches-xbox/playstation overlays at install time); the release check skips them by directory name.
     copy_tree(ROOT / 'controller-ui', out / 'controller-ui', lambda r: False)
+    # The DLCs (docs/dlc.md): XML sources the installer copies next to astralchain.exe; the game builds them into its
+    # archives at start, and only with the setting dlc = 1.
+    copy_tree(ROOT / 'dlc', out / 'dlc', lambda r: False)
     copy_tree(ROOT / 'installer', out / 'installer', lambda r: '__pycache__' in r or r.startswith('launcher/'))
     shutil.copy2(ROOT / 'astralchain.ini.example', out / 'astralchain.ini.example')
     # RecompLauncher reads it at the top of the unpacked release, or at the AppDir root of the AppImage

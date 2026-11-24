@@ -295,6 +295,7 @@ change passes these, all run with `.venv`:
 | `tests\excl_windows.py` | every exclusive window of the game's modules computes from registers alone (no memory access or call between the load and the store exclusive), the condition under which the compare-and-swap of `cpu.h` behaves as hardware; must report 0 windows | yes |
 | `tests\jumptables_check.py` | `recomp/jumptables.py` against a Unicorn oracle; must report 0 disagreements and 0 unverified bases | yes |
 | `tests\vlocals_check.py` | the V-locals syncs (`recomp/vlocals.py`) on the lifted chunks of `generated\v101`, the patch helper calls included, which `tests\diff\func.py` never emits; must report 0 violations | yes |
+| `tests\dlc_check.py` | the DLCs (`docs/dlc.md`), in three parts that each say when they are skipped: off by default (the setting, the ini example, the patch sets `quest` and `questmenu`), shipped by the release, and every DLC of `dlc/` well formed; `--probe-dlc`; the two archives the build makes from the game's with `dlc/` against the test's own writers, byte for byte | part 3 |
 
 A `--cpu v2` build passes the same differential tests with `--cflags=-march=x86-64-v2`; they compile `runtime/fma.c`
 too, so they check the software fma the v2 build links rather than the C runtime's.
@@ -313,6 +314,10 @@ upscaled path), whose log counts the frames resolved, with the scene and output 
 `AC_ANTI_ALIASING=dlaa|xess|fsr3` in the environment still runs that upscaler in its native mode. A change to
 `recomp/patches-v101.txt`'s `scene` set or to `resolution.c`'s scene sizes wants such a run per mode, in handheld
 (`AC_OPERATION_MODE=handheld`) too.
+A change to the DLCs (`runtime/dlc.c`, `runtime/quest.c`, the sets `quest` and `questmenu`, a file of `dlc/`) passes
+`tests\dlc_check.py` in full and `--probe-dlc` (no game files; `--prove` runs it): the builder on archives and DLC
+folders of the probe's own, read back with readers written apart from the builder's writers, then 2 000 archives
+and 300 manifests cut short or with bytes changed, which must all be answered.
 A change to `runtime/ov_libc.c` (the host memcpy, memset, memmove, memcmp, strlen, strcmp, strncmp) passes
 `--probe-libc` (game files): each host function against the sdk's lifted one on the same inputs, which must report 0
 mismatches, then a timing table of both per size.
